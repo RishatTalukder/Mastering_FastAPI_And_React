@@ -392,4 +392,56 @@ Nagivate to frontend again and run the following command,
 ```bash
 pm install react-router bootstrap bootswatch react-icons axios      
 ```
-- `bootswatch` is used for bootstrap themes
+- `bootswatch` is used for bootstrap themes.
+- `react-icons` is used for icons.
+
+Now, let's make the frontend app clear and start working.
+
+Open the `frontend` folder and go to the `src` folder. Remove everything inside the `src` folder except the `App.jsx and main.jsx` file.
+
+Now, open the `App.jsx` file and remove everything inside it.
+
+And write the following code,
+
+```jsx {.line-numbers}
+//src/App.jsx
+
+function App() {
+
+  return (
+    <>
+      <h1>
+        TODO
+      </h1>
+    </>
+  )
+}
+
+export default App
+```
+
+Inside the `main.jsx` file, remove the import statements for every css file. The main.jsx file should look like this,
+
+```jsx {.line-numbers}
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import App from './App.jsx'
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+```
+
+Now, that we have a clean frontend app, a small overview of what we are dealing with.
+
+Every line of code will be written inside the `src` directory.
+
+App is the `main component` of the app.
+
+Main is the `root component` of the app.
+
+We will setup router and bootstrap in these files.
+
+But first, let's use axios to fetch data from the backend.
