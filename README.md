@@ -11,14 +11,14 @@ In this repository you will find some projects that I wanted to do for a very lo
 1. A Simple todo app(the hello world of web development).
 2. A image detector. (Just to show how to connect a ml model to a web app).
 3. A Simple blog app.
-4. A React time chat app.
-5. A Simple e-commerce app.(might use the image detector in it).
-6. A project manager app(I don't know if I can do it or not).
+4. A Real time chat app.
+5. A project manager app(I don't know if I can do it or not).
+6. A Simple e-commerce app.(might use the image detector in it).
 7. I haven't decided yet.
 
 I hope this will help you to learn `FastAPI` and `React` together and pray for me because I really don't lnow if I can even do anything after the first project.
 
-> PS: This series will be heavily focused on `fastAPI` but not reactjs. This will be like the continuation of my `reactjs` series. So, if you don't know anything about reactjs then you go watch my `reactjs` series first, also join my discord where I might not help you. 
+> PS: This series will be heavily focused on `fastAPI` but not reactjs. This will be like the continuation of my `reactjs` series. So, if you don't know anything about reactjs then you go watch my `reactjs` series first, also join my discord where I might not help you.
 
 Huhu! Gotcha!
 
