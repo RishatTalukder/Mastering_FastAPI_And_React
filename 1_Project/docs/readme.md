@@ -445,3 +445,232 @@ Main is the `root component` of the app.
 We will setup router and bootstrap in these files.
 
 But first, let's use axios to fetch data from the backend.
+
+## Fetching data from the backend
+
+Now, make a new folder inside `frontend/src` named `pages` and inside it create a file named `Home.jsx` and add the following code,
+
+```jsx {.line-numbers}
+//src/pages/Home.jsx
+import React from 'react'
+
+const Home = () => {
+  return (
+    <div>
+      Home
+    </div>
+  )
+}
+
+export default Home
+```
+
+This just a simple component setup.
+
+Now, we well add it to the `App.jsx` file,
+
+```jsx {.line-numbers}
+//src/App.jsx
+import Home from "./pages/Home";
+
+function App() {
+  return (
+    <>
+      <main>
+        <Home />
+      </main>
+    </>
+  );
+}
+
+export default App;
+```
+
+No, we can fetch data in the `Home.jsx` file using `axios`, Let's try it out.
+
+```jsx {.line-numbers}
+//src/pages/Home.jsx
+import React, { useEffect } from "react";
+import axios from "axios";
+
+//function to send http request
+const fetchData = async () => {
+  try {
+    const response = await axios.get("http://localhost:8000/");
+    console.log(response.data);
+  } catch (error) {
+    console.log(error);
+  } finally {
+    // always executed
+  }
+};
+
+const Home = () => {
+
+  //fetch data
+    useEffect(()=>{
+        fetchData()
+    },[]) // empty array means it will run only once
+  
+  return <div>Home</div>;
+};
+
+export default Home;
+```
+
+Here, I am using `useEffect` hook to fetch data from the backend.
+
+And I am using `axios` to make http requests.
+
+I logged it. So, if you go to the `react server` and open the console in the `inspector`, you should see the data.
+
+BUUUUT, instead of data you see `errors`. The errors are mainly because of the `cors policy`. So, we need to allow cross origin resource sharing.
+
+## Cors policy
+
+The `cors policy` is a security feature in web browsers that prevents cross-origin HTTP requests from being made to a server.
+
+So, the frontend server is not allowed to make http requests to the backend server.
+
+So, what do we do?
+
+We do some configuration in the `backend server` to allow cross origin resource sharing.
+
+Go to the `backend` folder and open the `main.py` file and add the following code,
+
+```python {.line-numbers}
+#backend/main.py
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+...
+```
+
+This is a middleware that allows cross origin resource sharing.
+
+We can use a method of `fastapi` called `add_middleware` to add a middleware to the app.
+
+Inside the `add_middleware` method, we can pass the following arguments,
+
+- `allow_origins` - A list of origins that are allowed to make cross-origin HTTP requests.
+- `allow_credentials` - A boolean that indicates whether credentials are allowed in cross-origin requests.
+- `allow_methods` - A list of HTTP methods that are allowed in cross-origin requests.
+- `allow_headers` - A list of HTTP headers that are allowed in cross-origin requests.
+
+And we can pass `["*"]` to allow all origins.
+
+And now there should be no errors in the console.
+
+> You can also pass a single origin instead of `["*"]` like `["http://localhost:5173"]`.
+
+Now, let's make setup the home page so that the user can see all there todos in the home page.
+
+We should make some dummy data.
+
+Go to the `backend` folder and open the `main.py` file and add the following code,
+
+```python {.line-numbers}
+#backend/main.py
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"], 
+)
+
+dummy_todo = [
+    {
+        "id": 1,
+        "title": "Todo 1",
+        "description": "Description 1",
+        "completed": False,
+    },
+    {
+        "id": 2,
+        "title": "Todo 2",
+        "description": "Description 2",
+        "completed": False,
+    },
+    {
+        "id": 2,
+        "title": "Todo 2",
+        "description": "Description 2",
+        "completed": False,
+    },
+]
+
+
+@app.get("/")
+async def root() -> dict:
+    return dummy_todo
+```
+
+Now, this dummy data will be fetched in the `Home.jsx` file.
+
+So, we can use it in the `Home.jsx` file,
+
+```jsx {.line-numbers}
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+
+const Home = () => {
+  //defining state
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // reloading data and setting the state
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("http://localhost:8000/");
+      console.log(response.data);
+      setData(response.data);
+    } catch (error) {
+      console.log(error);
+      setError(error);
+    } finally {
+      // always executed
+      console.log("done");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  return <div>
+    <h1>Home</h1>
+    <ul>
+      {data.map((item) => (
+        <li key={item.id}>{item.title}</li>
+      ))}
+    </ul>
+  </div>;
+};
+
+export default Home;
+```
+
+And after that, we can see the todos in the home page.
+
+Now one big issue that will arise is, while adding code to the `main.py` file as the only point of entry, this file will get very big and messy.
+
+So, we should follow a cleaner structure.
