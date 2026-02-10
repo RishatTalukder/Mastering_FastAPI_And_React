@@ -659,6 +659,7 @@ const Home = () => {
   return <div>
     <h1>Home</h1>
     <ul>
+    {/* mapping the data to the list */}
       {data.map((item) => (
         <li key={item.id}>{item.title}</li>
       ))}
@@ -674,3 +675,191 @@ And after that, we can see the todos in the home page.
 Now one big issue that will arise is, while adding code to the `main.py` file as the only point of entry, this file will get very big and messy.
 
 So, we should follow a cleaner structure.
+
+
+## Refactoring the backend code
+
+So, What we can do it make a new folder named `utils` inside the `backend` folder.
+
+And move the `dummy_todo` variable to the `utils` folder and then import it in the `main.py` file.
+
+And now the `backend/main.py` file should look like this,
+
+```python {.line-numbers}
+#backend/main.py
+dummy_todo = [
+    {
+        "id": 1,
+        "title": "Todo 1",
+        "description": "Description 1",
+        "completed": False,
+    },
+    {
+        "id": 2,
+        "title": "Todo 2",
+        "description": "Description 2",
+        "completed": False,
+    },
+    {
+        "id": 3,
+        "title": "Todo 3",
+        "description": "Description 3",
+        "completed": False,
+    },
+]
+
+```
+
+Now the `main.py` file should look like this,
+
+```python {.line-numbers}
+#backend/main.py
+from fastapi import FastAPI
+from enum import Enum
+from fastapi.middleware.cors import CORSMiddleware
+# dummy data from utils
+from utils.dummy import dummy_todo
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/")
+async def root()-> list[dict[str, int | str | bool]]:
+    return dummy_todo
+
+@app.get("/items/{item_id}")
+async def read_item(item_id : int):
+    return {"item_id": item_id}
+
+
+class PredefinedEndpoints(str, Enum):
+    life = "life"
+    universe = "universe"
+    everything = "everything"
+
+@app.get("/items/type/{item_type}")
+async def read_item_type(item_type: PredefinedEndpoints, q: str | None = None):
+    return {"item_type": item_type, "q": q}
+```
+
+Looks cleaner but we have other issues like the `main.py` file is getting very big with all the routs and can be hard to figure out which endpoint is which.
+
+So, we should do some `routing`.
+
+
+## Routing
+
+What is routing?
+
+Routing is the process of mapping URLs to specific endpoints in a web application.
+
+
+This will help us organize our code into different files and modules and keep the code clean and easy to understand.
+
+So, what we are going to do is split our code into different apps.
+
+Sor example we are making a `todo` app we can split this backend code into two folder one is for the todo and another one is for the authentication or the user management.
+
+So, in this case. Let's make a folder named `todo` inside the `backend` folder.
+
+And inside that folder we can make a file named `router.py`. In this file we can define the routes for the todo app APIs.
+
+Write this code in the `router.py` file,
+
+```python {.line-numbers}
+#backend/todo/router.py
+from fastapi import APIRouter
+
+router = APIRouter(
+    prefix="/todo",
+    tags=["todo"],
+)
+
+```
+
+> This will set up the router for the todo app. 
+
+APIRouter is a class that is used to create a router for a FastAPI application.
+
+Inside we are passing some arguments to the `APIRouter` class.
+
+- `prefix` - This prefic will be added to all the urls in the router.
+  - For example: I've set the prefix to `/todo` so all the urls in this router will start with `/todo` like `/todo/index` or `/todo/create`.
+
+- `tags` - This will be used to group the routes in the swagger docs. The built-in FastAPI docs will group the routes by the tags.
+
+Now, we can add this router inside the `main.py` file,
+
+```python {.line-numbers}
+#backend/main.py
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from utils.dummy import dummy_todo
+from todo.router import router
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(router, prefix="/api")
+
+@app.get("/")
+async def root():
+    return dummy_todo
+
+```
+
+> Remember to add `__init__.py` files to all the folders you create.
+
+We can use the `include_router` method to include the router in the main app.
+
+And cut every single line of code from the `main.py` file and paste it in the `router.py` file.
+
+and after renaming the `variables` and functions inside the `router.py` file,
+
+```python {.line-numbers}
+#backend/todo/router.py
+from fastapi import APIRouter
+from utils.dummy import dummy_todo
+from enum import Enum
+router = APIRouter(
+    prefix="/todo",
+    tags=["todo"],
+)
+
+@router.get("/")
+async def root()-> list[dict[str, int | str | bool]]:
+    return dummy_todo
+
+@router.get("/items/{item_id}")
+async def read_item(item_id : int):
+    return {"item_id": item_id}
+
+
+class PredefinedEndpoints(str, Enum):
+    life = "life"
+    universe = "universe"
+    everything = "everything"
+
+@router.get("/items/type/{item_type}")
+async def read_item_type(item_type: PredefinedEndpoints, q: str | None = None):
+    return {"item_type": item_type, "q": q}
+
+```
+
+We just had to rename the `app` to `router` and we if we look at the server, everything is working fine.
+
+Now, you shoudl also see a group in the `swagger` docs.(`h)
