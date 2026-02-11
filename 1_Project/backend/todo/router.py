@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, status, Response
 from utils.dummy import dummy_todo
 from enum import Enum
 router = APIRouter(
@@ -11,7 +11,11 @@ async def root()-> list[dict[str, int | str | bool]]:
     return dummy_todo
 
 @router.get("/items/{item_id}")
-async def read_item(item_id : int):
+async def read_item(item_id : int, response: Response):
+    if item_id > 10:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"error": "item_id should be less than 10"}
+
     return {"item_id": item_id}
 
 

@@ -222,6 +222,12 @@ async def read_item(item_id: int):
     return {"item_id": item_id}
 ```
 
+Now, you might think what is up with the `:` symbol.
+
+This is called a `type hint`. FastAPI can will use this to convert and validate the type of the parameter.
+
+Wher you pass a parameter if it's anything but a number, it'll throw an error.
+
 Here, we are doing a get request to the `/items/{items_id}` endpoint. We can go to that `/items` and then pass the `/2` as a parameter or `/3` as the item id.
 
 This will be a dynamic endpoint and the function will get the `item_id` as a parameter from the url.
@@ -242,27 +248,14 @@ If you enter something other than a number, you'll get an error.
   ]
 }
 ```
+
 Also, another thing you need to be careful about is that the order matters.
 
 So, if you have a route like this `/items/all` that will return all the items in the database.
 
-And it's written after `/items/{item_id}`. 
+And it's written after `/items/{item_id}`.
 
 It'll have a conflict because `/items/{item_id}` will intercept the request before the `/items/all` route.
-
-So, it'll show a `error`.
-
-One thing that sometimes get overlooked is that fastapi uses `type hints`.
-
-For example, in the above code, we have, a parameter called `item_id` that is of type `int`.
-
-This might not be a big deal when you are developing a python app but for fastapi, it is very important.
-
-Because if I just remove the `:` and the `int` from the parameter, it will work for every kind of data type.
-
-So, by type hinting we are actually forcing the type of the parameter.
-
-And anything other than the type specified in the type hint will `throw an error`.
 
 ## Predefined endpoints
 
@@ -276,7 +269,7 @@ Like we can use a `enum` class to check if the parameter is valid or not.
 #backend/main.py
 from enum import Enum
 
-... 
+...
 
 class PredefinedEndpoints(str, Enum):
     life = "life"
@@ -322,6 +315,10 @@ Click and expand the endpoint you want to test.
 
 One last thing before we start the frontend app.
 
+This is called a `swagger ui`.
+
+There is another built in documentation called `redoc`. You can also access it in the `/redoc` endpoint.
+
 ### Query parameters
 
 Query parameters are parameters that are not passed in the url but is passed in the query string.
@@ -336,7 +333,11 @@ async def some_function(id: int, q: Optional[str] = None):
     return {"id": id, "q": q}
 ```
 
-If the url is a `dynamic` url than the first parameters will be recognized as the `path parameter` and any other parameters after will be recognized as `query parameters`.
+This will take a `id` as a parameter and a `q` as a query parameter.
+
+If the url is a `dynamic` url than the first parameters that has the same name as the url parameter will be treated as the path parameter. Anything other than that will be treated as a query parameter.
+
+> By using the `Optional` type hint, we can make a parameter optional.
 
 With that done let's start the frontend app.
 
@@ -358,7 +359,7 @@ then as a framework select `react` and press enter.
 
 select the javascript variant and press enter.
 
-> You can select no for `rolldown-vite` 
+> You can select no for `rolldown-vite`
 
 And after that there should ne no more prompts.
 
@@ -375,6 +376,7 @@ npm install
 ```bash
 npm run dev
 ```
+
 This will start the react app.
 
 Now, open your browser and go to `http://localhost:5173/`. You should see a nice react app... Too bad I'm going to remove every single one of these boilerplate...
@@ -390,8 +392,9 @@ We will need,
 Nagivate to frontend again and run the following command,
 
 ```bash
-pm install react-router bootstrap bootswatch react-icons axios      
+pm install react-router bootstrap bootswatch react-icons axios
 ```
+
 - `bootswatch` is used for bootstrap themes.
 - `react-icons` is used for icons.
 
@@ -407,31 +410,28 @@ And write the following code,
 //src/App.jsx
 
 function App() {
-
   return (
     <>
-      <h1>
-        TODO
-      </h1>
+      <h1>TODO</h1>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
 ```
 
 Inside the `main.jsx` file, remove the import statements for every css file. The main.jsx file should look like this,
 
 ```jsx {.line-numbers}
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.jsx";
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
     <App />
   </StrictMode>,
-)
+);
 ```
 
 Now, that we have a clean frontend app, a small overview of what we are dealing with.
@@ -452,17 +452,13 @@ Now, make a new folder inside `frontend/src` named `pages` and inside it create 
 
 ```jsx {.line-numbers}
 //src/pages/Home.jsx
-import React from 'react'
+import React from "react";
 
 const Home = () => {
-  return (
-    <div>
-      Home
-    </div>
-  )
-}
+  return <div>Home</div>;
+};
 
-export default Home
+export default Home;
 ```
 
 This just a simple component setup.
@@ -506,12 +502,11 @@ const fetchData = async () => {
 };
 
 const Home = () => {
-
   //fetch data
-    useEffect(()=>{
-        fetchData()
-    },[]) // empty array means it will run only once
-  
+  useEffect(() => {
+    fetchData();
+  }, []); // empty array means it will run only once
+
   return <div>Home</div>;
 };
 
@@ -589,7 +584,7 @@ app.add_middleware(
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"], 
+    allow_headers=["*"],
 )
 
 dummy_todo = [
@@ -656,15 +651,17 @@ const Home = () => {
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
-  return <div>
-    <h1>Home</h1>
-    <ul>
-    {/* mapping the data to the list */}
-      {data.map((item) => (
-        <li key={item.id}>{item.title}</li>
-      ))}
-    </ul>
-  </div>;
+  return (
+    <div>
+      <h1>Home</h1>
+      <ul>
+        {/* mapping the data to the list */}
+        {data.map((item) => (
+          <li key={item.id}>{item.title}</li>
+        ))}
+      </ul>
+    </div>
+  );
 };
 
 export default Home;
@@ -675,7 +672,6 @@ And after that, we can see the todos in the home page.
 Now one big issue that will arise is, while adding code to the `main.py` file as the only point of entry, this file will get very big and messy.
 
 So, we should follow a cleaner structure.
-
 
 ## Refactoring the backend code
 
@@ -732,7 +728,7 @@ app.add_middleware(
 
 
 @app.get("/")
-async def root()-> list[dict[str, int | str | bool]]:
+async def root()-> list:
     return dummy_todo
 
 @app.get("/items/{item_id}")
@@ -754,13 +750,11 @@ Looks cleaner but we have other issues like the `main.py` file is getting very b
 
 So, we should do some `routing`.
 
-
 ## Routing
 
 What is routing?
 
 Routing is the process of mapping URLs to specific endpoints in a web application.
-
 
 This will help us organize our code into different files and modules and keep the code clean and easy to understand.
 
@@ -785,7 +779,7 @@ router = APIRouter(
 
 ```
 
-> This will set up the router for the todo app. 
+> This will set up the router for the todo app.
 
 APIRouter is a class that is used to create a router for a FastAPI application.
 
@@ -841,7 +835,7 @@ router = APIRouter(
 )
 
 @router.get("/")
-async def root()-> list[dict[str, int | str | bool]]:
+async def root()-> list:
     return dummy_todo
 
 @router.get("/items/{item_id}")
@@ -862,4 +856,141 @@ async def read_item_type(item_type: PredefinedEndpoints, q: str | None = None):
 
 We just had to rename the `app` to `router` and we if we look at the server, everything is working fine.
 
-Now, you shoudl also see a group in the `swagger` docs.(`h)
+Now, you shouls also see a group in the `swagger` docs.
+
+No,w with that I think we have a nice setup for our todo app.
+
+So, we should move on to setting up a database to store our data.
+
+But before that I have to talk about somethings that I should not slack of on right now.
+
+> We have to use the `/api/todo` prefix in the urls now.
+
+## Error Handling
+
+Now we know that when we pass a path parameter that is not defined we get a error in the server like below.
+
+```json
+{
+  "detail": [
+    {
+      "type": "int_parsing",
+      "loc": ["path", "item_id"],
+      "msg": "Input should be a valid integer, unable to parse string as an integer",
+      "input": "dawdaw"
+    }
+  ]
+}
+```
+
+Now we shoudl really check if it's a error or not.
+
+So, let's go to the react app and see if we can fetch data from a wrong path parameter.
+
+We just update the `fetchData` function,
+
+```jsx {.line-numbers}
+//src/pages/Home.jsx
+
+....
+
+const fetchData = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("http://localhost:8000/api/todo/items/dawdaw");
+      console.log(response.data);
+      setData(response.data);
+    } catch (error) {
+      console.log(error);
+      setError(error);
+    } finally {
+      // always executed
+      console.log("done");
+      setLoading(false);
+    }
+  };
+
+```
+
+> Now if you look at the screen you can see that it is an error but it is a 422 status code.
+
+![alt text](image-3.png)
+
+Now, what is a status code?
+
+Status codes are used to indicate the `success` or `failure` of a request.
+
+Different status codes have different meanings.
+
+> 200 means good.
+> 400 means bad.
+
+You can go to this [wikipedia](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes) page to see all the status codes.
+
+Mainly, The status code are divided into 5 groups.
+
+- `1xx` - Informational.(ex: 100 Continue, 101 Switching Protocols)
+- `2xx` - Success.(ex: 200 OK, 201 Created)
+- `3xx` - Redirection.(ex: 301 Moved Permanently, 302 Found)
+- `4xx` - Client Error.(ex: 400 Bad Request, 401 Unauthorized)
+- `5xx` - Server Error.(ex: 500 Internal Server Error, 503 Service Unavailable)
+
+So, anything starting with `4` means an error with the request.
+
+Anything starting with `5` means an error with the server.
+
+Now, what is `422` status code?
+
+It means the request was well-formed but was unable to be followed due to semantic errors.
+
+Which is actually correct because the path parameter `item_id` is not a valid integer.
+
+But what if we want to return a custom error message?
+
+Let's say if path parameter is greater than 10 we want to return a custom error message.
+
+```python {.line-numbers}
+#backend/todo/router.py
+@router.get("/items/{item_id}")
+async def read_item(item_id : int):
+    if item_id > 10:
+        return {"error": "item_id should be less than 10"}
+
+    return {"item_id": item_id}
+```
+
+Now, if we modify the `fetchData` function again and pass a path parameter greater than 10,
+
+This message will be displayed,
+
+But the problem is it is not displayed as an error.
+
+So, we should set the status code to something that corresponds to the error. Simply we can say that the path we are searching for is `not found`.
+
+```python {.line-numbers}
+#backend/todo/router.py
+from fastapi import APIRouter, status, Response
+
+...
+
+@router.get("/items/{item_id}")
+async def read_item(item_id : int, response: Response):
+    if item_id > 10:
+        response.status_code = status.HTTP_404_NOT_FOUND # setting the status code
+        return {"error": "item_id should be less than 10"}
+
+    return {"item_id": item_id}
+
+...    
+
+```
+
+We can change the response status code to something that corresponds to the error.
+
+To do that we need to import the `Response` class and the `status` module from the `fastapi` library.
+
+In the function for an API endpoint, we can use a extra parameter called `response` which will be an instance of the `Response` class.
+
+This parameter will be completely optional. And we can now use the response object to set the status code.
+
+This response object has a lot of response attributes one of them is `status_code` which we can use to set the status code. 

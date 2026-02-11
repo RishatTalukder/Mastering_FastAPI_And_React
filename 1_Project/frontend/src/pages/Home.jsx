@@ -9,7 +9,7 @@ const Home = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:8000/");
+      const response = await axios.get("http://localhost:8000/api/todo/items/3");
       console.log(response.data);
       setData(response.data);
     } catch (error) {
