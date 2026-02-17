@@ -1,17 +1,25 @@
 from fastapi import APIRouter, status, Response
 from utils.dummy import dummy_todo
 from enum import Enum
+from todo.schemas import Todo
 router = APIRouter(
     prefix="/todo",
     tags=["todo"],
 )
 
-@router.get("/")
-async def root()-> list[dict[str, int | str | bool]]:
+@router.get(
+    "/",
+    response_model=list[Todo],
+    summary="Get all todo items",
+)
+async def root():
+    """
+    - **This endpoint will return a list of all todo items in the database.**
+    """
     return dummy_todo
 
 @router.get("/items/{item_id}")
-async def read_item(item_id : int, response: Response):
+async def read_item(item_id : int, response: Response) -> dict:
     if item_id > 10:
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": "item_id should be less than 10"}

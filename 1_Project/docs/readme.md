@@ -347,10 +347,16 @@ You need to have `nodejs` and `npm` installed.
 
 If you don't have it installed, you can download it [here](https://nodejs.org/en/download/).
 
+Before starting the app, I'll install `pnpm`. It's a package manager for `nodejs` and works exactly like `npm` but it's more efficient in terms of memory and performance.
+
+```bash
+npm install -g pnpm@latest-10
+```
+
 Now, open the terminal and navigate to your root directory and run the following command,
 
 ```bash
-npm create vite@latest
+pnpm create vite
 ```
 
 Name the project `frontend` and press enter.
@@ -370,11 +376,11 @@ Now, You'll see that there's a folder created called `frontend` in your root dir
 in the terminal navigate to the `frontend` directory and run the following command,
 
 ```bash
-npm install
+pnpm install
 ```
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 This will start the react app.
@@ -392,7 +398,7 @@ We will need,
 Nagivate to frontend again and run the following command,
 
 ```bash
-pm install react-router bootstrap bootswatch react-icons axios
+pnpm install react-router bootstrap bootswatch react-icons axios
 ```
 
 - `bootswatch` is used for bootstrap themes.
@@ -981,7 +987,7 @@ async def read_item(item_id : int, response: Response):
 
     return {"item_id": item_id}
 
-...    
+...
 
 ```
 
@@ -993,4 +999,108 @@ In the function for an API endpoint, we can use a extra parameter called `respon
 
 This parameter will be completely optional. And we can now use the response object to set the status code.
 
-This response object has a lot of response attributes one of them is `status_code` which we can use to set the status code. 
+This response object has a lot of response attributes one of them is `status_code` which we can use to set the status code.
+
+# Defining a custom Type
+
+Now if you take a look at the `/api/todo` endpoint, you can say that it is a list of todo items.
+
+But this is actually not a list of todo items. It is a list of objects and each object has a `id`, `title`, `description` and `completed` attribute.
+
+But in the `docs` in teh example response you can see that it is a list of todo items.
+
+So, How do we define this for better documentation?
+
+Well, we can define a custom type.
+
+These custom types are called `schema` in fastapi.
+
+Too keep the code clean and readable we should define the schema in a separate file.
+
+So, make a file inside the `backend/todo` folder called `schemas.py` and write the following code,
+
+```python {.line-numbers}
+#backend/todo/schemas.py
+from pydantic import BaseModel
+
+class Todo(BaseModel):
+    id: int
+    title: str
+    description: str
+    completed: bool
+```
+
+Now we import the `Todo` class from the `schemas.py` file.
+
+```python {.line-numbers}
+#backend/todo/router.py
+from fastapi import APIRouter, status, Response
+from utils.dummy import dummy_todo 
+from todo.schemas import Todo
+
+
+@router.get("/")
+async def root()-> list[Todo]:
+    return dummy_todo
+
+```
+
+Now if you go to the `docs` and take a look at the response, you can see that in the response example it is showing the `Todo` schema that we defined.
+
+You can also do it like below,
+
+```python {.line-numbers}
+#backend/todo/router.py
+from fastapi import APIRouter, status, Response
+from utils.dummy import dummy_todo
+from todo.schemas import Todo
+
+@router.get("/", response_model=list[Todo])
+async def root():
+    return dummy_todo
+```
+
+For better understanding of the `api` you can also write a description and summary for the endpoint.
+
+```python {.line-numbers}
+#backend/todo/router.py
+from fastapi import APIRouter, status, Response
+from utils.dummy import dummy_todo
+from todo.schemas import Todo
+
+@router.get(
+    "/",
+    response_model=list[Todo],
+    summary="Get all todo items",
+    description="This endpoint will return a list of all todo items in the database.",
+)
+async def root():
+    return dummy_todo
+
+...
+```
+
+Or you can also write a docstring for the function and it will be used as the description in the docs.
+
+```python {.line-numbers}
+#backend/todo/router.py
+from fastapi import APIRouter, status, Response
+from utils.dummy import dummy_todo
+from todo.schemas import Todo
+
+@router.get(
+    "/",
+    response_model=list[Todo],
+    summary="Get all todo items",
+)
+async def root():
+    """
+    - **This endpoint will return a list of all todo items in the database.
+    - **This is a dummy endpoint and it will return the same data every time.**
+    """
+    return dummy_todo
+
+...
+```
+
+You can also define `response_description` which will be used as the description in the docs. 
