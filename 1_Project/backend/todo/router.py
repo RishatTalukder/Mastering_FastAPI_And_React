@@ -1,7 +1,7 @@
-from fastapi import APIRouter, status, Response
+from fastapi import APIRouter, status, Response, Query, Path, Body
 from utils.dummy import dummy_todo
 from enum import Enum
-from todo.schemas import Todo
+from todo.schemas import Todo, Todo_Request
 router = APIRouter(
     prefix="/todo",
     tags=["todo"],
@@ -36,3 +36,24 @@ class PredefinedEndpoints(str, Enum):
 async def read_item_type(item_type: PredefinedEndpoints, q: str | None = None):
     return {"item_type": item_type, "q": q}
     
+
+@router.post(
+        "/new_todo", 
+        response_model=Todo
+)
+async def create_todo(todo: Todo_Request):
+    return todo
+
+@router.post(
+    "/new_todo/{id}",
+)
+async def update_todo(
+    todo: Todo_Request = Body(...), 
+    id: int = Path(..., title="The ID of the todo to update"),
+    query: str | None = Query(None, title="An optional query string")
+    ):
+    return {
+        "id": id,
+        "data": todo,
+        "query": query
+    }

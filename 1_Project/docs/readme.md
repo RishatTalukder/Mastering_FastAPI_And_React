@@ -1104,3 +1104,221 @@ async def root():
 ```
 
 You can also define `response_description` which will be used as the description in the docs. 
+
+Try to do it yourself.
+
+Now, we need to talk more about path parameters.
+
+Backend, not only just sends data it can also recieve data through post request.
+
+So, let's see how we can do that.
+
+# In-depth Path parameters  
+
+When the user wants to create something or store something or send something to the backend it is done by sending a post request.
+
+Post request always carries data.
+
+So, in that case let's see how we can define a post request.
+
+```python {.line-numbers}
+#backend/todo/router.py
+ 
+...
+
+@router.post("/new_todo")
+async def create_todo(todo):
+    return todo
+
+...
+```
+
+Here, we have a function called `create_todo` which will be called when the user sends a post request to the `/api/todo/new_todo` endpoint and then we are returning the todo object.
+
+So, let's see what happens when we test it in the docs.
+
+If you try it out you should see that it is expecting a todo object as a query parameter.
+
+![alt text](image-4.png)
+
+When you enter something it will return what you entered.
+
+This is not a good way to do it.
+
+Because most of the time the user won't just send some `string` they will send a `json` object.
+
+Which is then validated and converted into the backend object so that the backend store it in the database.
+
+This is where `pydantic` comes in.
+
+remember I told you before that `typing` in fast api is not just python typing it actually `validates` and `converts` the data.
+
+So, to fullfill our curiosity let's just set the type of the parameter to `Todo` and see what happens.
+
+```python {.line-numbers}
+#backend/todo/router.py
+...
+
+
+@router.post("/new_todo")
+async def create_todo(todo: Todo):
+    return todo
+
+... 
+```
+
+Now, take look at the `docs`. You should see that now it is expecting a `Todo` object and the quesry parameter is gone.
+
+Instead of that there is something called `request body` which is used to send data to the backend.
+
+Now, inside the request body you can see the `Todo` object.
+
+And now click on the try it out cutton to edit the request body.
+
+![alt text](image-5.png)
+
+Now, when you enter something it will return what you entered as a todo object.
+
+So, now fastapi is recognizing that this is a post request and it is expecting a `Todo` object in the request body.
+
+But what about the validation part?
+
+> We should test out if the validation is working properly.
+
+> Try to put different type of data and see what happends.
+
+But before that I'll make a new `pydantic` class to represent the `todo_request` object. Because the `Todo` class is used for the response and the `todo_request` class is used for the request.
+
+```python {.line-numbers}
+#backend/todo/schemas.py
+
+from pydantic import BaseModel
+
+class todo_request(BaseModel):
+    title: str
+    description: str
+    completed: bool
+```
+
+Now, let add the response model and the request model to the `create_todo` function.
+
+```python {.line-numbers}
+from fastapi import APIRouter, status, Response
+from utils.dummy import dummy_todo
+from enum import Enum
+from todo.schemas import Todo, Todo_Request
+
+...
+
+@router.post(
+        "/new_todo", 
+        response_model=Todo # This is the response model
+)
+async def create_todo(todo: Todo_Request):
+    return todo
+
+```
+
+I'm doing this because most of the time the responce and requests have a very similar structure but it's not completely the same.
+
+Now, there arrieves another issue.
+
+As we are sending a post request to a static url we are making a simple parameter be recognized as a request body.
+
+## Path, query and request body
+
+But what if that is a dynamic url?
+
+What is this url needs a extra query parameter?
+
+How can we define that.
+
+In this case:
+
+- The parameter with pydantic `basemodel` will be recognized as a request body.
+- The parameter with the same name to the dynamic url parameter will be recognized as a parameter.
+- Anything other than that will be recognized as a query parameter.
+
+So, let's see if this works or not.
+
+let's define a new post request endpoint.
+
+```python {.line-numbers}
+from fastapi import APIRouter, status, Response
+from utils.dummy import dummy_todo
+from enum import Enum
+from todo.schemas import Todo, Todo_Request
+
+...
+
+@router.post("/new_todo/{id}",)
+async def update_todo(todo: Todo_Request, id: int, query: str | None = None):
+    return {
+        "id": id,
+        "data": todo,
+        "query": query
+    }
+
+...
+```
+
+Now, if you take a look at the `docs` you can see that the `id` is a path parameter and the `todo` is a request body and the `query` is set as a query parameter.
+
+![alt text](image-6.png)
+
+> Remember the path parameter must have the same name as the dynamic url parameter.
+
+## Defining Metadata
+
+As fast api is a library that is used to build APIs. It give's a lot of control over the API. So much that we can define metadata for the parameters.
+
+As we have seen there are three types of parameters.
+
+- Path parameters
+- Query parameters
+- Request body
+
+You can define metadata for each of them.
+
+For query parameters you can use a function called `Query` and for path parameters you can use a function called `Path`.
+
+You can define them like this,
+
+```python {.line-numbers}
+#backend/todo/router.py
+
+from fastapi import APIRouter, status, Response, query, path, Body
+
+...
+
+@router.post(
+    "/new_todo/{id}",
+)
+async def update_todo(
+    todo: Todo_Request, 
+    id: int = Path(..., title="The ID of the todo to update", description="The ID of the todo to update"),
+    query: str | None = None
+    ):
+    return {
+        "id": id,
+        "data": todo,
+        "query": query
+    }
+
+...
+```
+
+You can pass arguments like:
+
+- `Default` - To set a default value.
+  - `...` or `ellipsis` - To make the parameter required.
+- `title` - To set a title for the parameter.
+- `description` - To set a description for the parameter.
+- `alias` - To set an alias for the parameter.
+- `gt` - To set a minimum value for the parameter.
+- `lt` - To set a maximum value for the parameter.
+- `max_length` - To set a maximum length for the parameter if it is a string.
+- `min_length` - To set a minimum length for the parameter if it is a string.
+- `regex` - To set a regular expression for the parameter if it is a string.
+
+Now, take a look at the `docs`, you'll see the description for the `id` parameter.

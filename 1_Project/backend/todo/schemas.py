@@ -5,3 +5,8 @@ class Todo(BaseModel):
     title: str
     description: str
     completed: bool
+
+class Todo_Request(BaseModel):
+    title: str
+    description: str
+    completed: bool
