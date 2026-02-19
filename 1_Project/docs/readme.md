@@ -1035,7 +1035,7 @@ Now we import the `Todo` class from the `schemas.py` file.
 ```python {.line-numbers}
 #backend/todo/router.py
 from fastapi import APIRouter, status, Response
-from utils.dummy import dummy_todo 
+from utils.dummy import dummy_todo
 from todo.schemas import Todo
 
 
@@ -1103,7 +1103,7 @@ async def root():
 ...
 ```
 
-You can also define `response_description` which will be used as the description in the docs. 
+You can also define `response_description` which will be used as the description in the docs.
 
 Try to do it yourself.
 
@@ -1113,7 +1113,7 @@ Backend, not only just sends data it can also recieve data through post request.
 
 So, let's see how we can do that.
 
-# In-depth Path parameters  
+# In-depth Path parameters
 
 When the user wants to create something or store something or send something to the backend it is done by sending a post request.
 
@@ -1123,7 +1123,7 @@ So, in that case let's see how we can define a post request.
 
 ```python {.line-numbers}
 #backend/todo/router.py
- 
+
 ...
 
 @router.post("/new_todo")
@@ -1164,7 +1164,7 @@ So, to fullfill our curiosity let's just set the type of the parameter to `Todo`
 async def create_todo(todo: Todo):
     return todo
 
-... 
+...
 ```
 
 Now, take look at the `docs`. You should see that now it is expecting a `Todo` object and the quesry parameter is gone.
@@ -1211,7 +1211,7 @@ from todo.schemas import Todo, Todo_Request
 ...
 
 @router.post(
-        "/new_todo", 
+        "/new_todo",
         response_model=Todo # This is the response model
 )
 async def create_todo(todo: Todo_Request):
@@ -1295,7 +1295,7 @@ from fastapi import APIRouter, status, Response, query, path, Body
     "/new_todo/{id}",
 )
 async def update_todo(
-    todo: Todo_Request, 
+    todo: Todo_Request,
     id: int = Path(..., title="The ID of the todo to update", description="The ID of the todo to update"),
     query: str | None = None
     ):
@@ -1322,3 +1322,304 @@ You can pass arguments like:
 - `regex` - To set a regular expression for the parameter if it is a string.
 
 Now, take a look at the `docs`, you'll see the description for the `id` parameter.
+
+> gt = greater than, lt = less than, max_length = maximum length, min_length = minimum length, regex = regular expression.
+
+> These arguments are called `validators` in fastapi. we can use them to validate the parameters.
+
+We've talked a lot about these metadata stuff where is the good stuff?
+
+# Database
+
+FastApi does not provide you with a stand alone `ORM` to work with databases.
+
+So, we have freedom to choose any `ORM` that we want.
+
+For the time being, we have two choices:
+
+- `SqlModel`
+- `SQLAlchemy`
+
+`SqlModel` is made by the creator of fastapi and internally made with `SqlAlchemy` and `pydantic`. It's also documented in the `fastapi` documentations.
+
+But a lot of it still not a mature library. Although easy to use a lot of depp ORM concepts are abstracted away.
+
+So, I'll use `SqlAlchemy` for this project.
+
+run the following command to install `sqlalchemy`,
+
+```bash
+pip install SQLAlchemy
+```
+
+So, let's setup a database.
+
+## Setting up a database
+
+Make a new file and name it `database.py` in the root `backend` folder.
+
+```python {.line-numbers}
+#backend/database.py
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+DATABASE_NAME = "todo.db"
+
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_NAME}"
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+```
+
+Just copy and paste the above code into the `database.py` file.
+
+Now let's go line by line.
+
+First we have to define the database name and the database url.
+
+> I'll be using `sqlite` for this project and later we will see how we can connect other databases.
+
+```python {.line-numbers}
+#backend/database.py
+DATABASE_NAME = "todo_db.db"
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_NAME}"
+```
+
+> SQLite is a light weight database that is used for small projects and testing. It is not production ready but can be used to check if the code is working or not then switch to a production database.
+
+> These are constants so by convention I'm using `UPPER_CASE` for constants.
+
+Now, The next step is to create the database.
+
+To do that we need the `create_engine` function. This function will look for the database and create it if it doesn't exist, for `sqlite` databases at least.
+
+```python {.line-numbers}
+#backend/database.py
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+```
+
+> We pass the `SQLALCHEMY_DATABASE_URL` to the `create_engine` function and it will create the connection to the database.
+
+> Also I passed the `check_same_thread` argument to the `connect_args` argument.
+
+In fastapi the functions can be asynchronous or synchronous. If we set the api endpoints to asynchronous we have might have multiple threads running at the same time.
+
+Sqlite is a `single thread` database and rejects requests from multiple threads. So, we need to tell him it is ok to accept requests from multiple threads in this same connection.
+
+that's why we pass the `check_same_thread` argument as `False` to the `connect_args` argument.
+
+Now, we make a session.
+
+What is a session?
+
+A session is a connection to the database. It's like meeting we set when we want to send or retrieve data from the database. after creating the engine we create the session so that we can use it later to send or retrieve data from the database.
+
+```python {.line-numbers}
+#backend/database.py
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+```
+
+> `autocommit=False` means that we don't want to commit the changes to the database automatically. We want to commit the changes manually so that unwanted changes are not committed to the database.
+
+> Flush means Sending the data to the database memory before saving ir permanently to the database. It controls when the data transfer will happen. By setting it to `False` we are saying until we explicitly `commit` the changes to the database do not send them to the database.
+
+> `bind=engine` means that we want to bind the session to the engine.
+
+Now, to make our database models we need to make a declarative base class.
+
+```python {.line-numbers}
+#backend/database.py
+Base = declarative_base()
+```
+
+> We are going to use this class to create our database models.
+
+Now, let's configure fastapi to use our database.
+
+To use the databse we will need the session.
+
+So, we can make a function to get the session.
+
+```python {.line-numbers}
+#backend/database.py
+def get_db():
+    with SessionLocal() as db:
+        yield db
+```
+
+Here, we are initializing the session as a context manager and getting the session as a yield.
+
+When the context manager is exited, the session will automatically close.
+
+> More simply, this function will give us the session by which we can send or retrieve data from the database. Once the session is closed the connection will be closed.
+
+Now, Let's make a table for our database. Create a new file and name it `models.py` in the `todo` folder.
+
+```python {.line-numbers}
+#backend/todo/models.py
+from database import Base
+from sqlalchemy import Column, Integer, String, Boolean
+
+class Todo(Base):
+    __tablename__ = "todo"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String)
+    description = Column(String)
+    completed = Column(Boolean)
+
+```
+
+This is the most basic table we can make.
+
+Every Database has some tables and these table are called models.
+
+Each model represents a table in the database.
+
+Here the `Todo` model represents the `todo` table in the database. It inherits from the `Base` class from the `database.py` file.
+
+And the `__tablename__` attribute is the name of the table in the database.
+
+Then we have the `id`, `title`, `description` and `completed` attributes which are the columns in the table.
+
+We have to specify the data type of each column.
+
+The `id` column is an integer and it is the primary key and it is also indexed.
+
+> Primary key is a unique identifier for each row in the table and it is a must have for every table.
+
+The id will be both the primary key and the index of the table.
+
+Also primary key can be any column in the table that has complete uniqueness.
+
+Like `email`, `NID` etc.
+
+Now, let's migrate the database.
+
+> Migration is the process of changing the structure of the database or just updating the structure of the database.
+
+We have almost evrything set up, so go to the `main.py` and paste the following code,
+
+```python {.line-numbers}
+#main.py
+from fastapi import FastAPI
+from enum import Enum
+from fastapi.middleware.cors import CORSMiddleware
+from todo.router import router
+from database import Base, engine # import the engine and Base class.
+from todo import models # import the Todo model
+
+...
+
+models.Base.metadata.create_all(bind=engine) # create the table in the database
+
+```
+
+> `models.Base.metadata.create_all(bind=engine)` will create the table in the database.
+
+Now you should see a new file named `todo_db.db` in the `root` folder.
+
+And we have a working sqlite database. If you are using vs code you can install the `sqlite3 editor` extension and open any sqlite database in it.
+
+But the work is not done yet.
+
+## Creating data in the database
+
+Let's say the user will create a todo item.
+
+We already have a `endpoint` to create a todo item.
+
+Now, let's go to the `router.py` file and paste the following code,
+
+```python {.line-numbers}
+#backend/todo/router.py
+from fastapi import APIRouter, status, Response, Query, Path, Body, Depends
+from utils.dummy import dummy_todo
+from enum import Enum
+from todo.schemas import Todo, Todo_Request
+from database import get_db # import the function to get the session
+from sqlalchemy.orm import Session # import the session to reference
+from todo.models import Todo as TodoModel # import the Todo model as TodoModel to avoid conflicts
+ 
+...
+    
+
+@router.post(
+        "/new_todo", 
+        response_model=Todo
+)
+async def create_todo(request: Todo_Request, db: Session = Depends(get_db)):
+    new_todo = TodoModel(
+        title=request.title,
+        description=request.description,
+        completed=request.completed
+    )
+    db.add(new_todo)
+    db.commit()
+    db.refresh(new_todo)
+    return new_todo
+```
+
+Just like request body is recognized as a request body via `pydantic`, we have to define the session as a dependency.
+
+Now, what is a dependency?
+
+When we are in a situation where we want to use something(a function) that is already defined but the parameter is not defined in the function, we have to use a dependency.
+
+`Depends` is a function that is used to define a dependency.
+
+When the function is called it will return the session and the session will be passed to the function as a parameter.
+
+Any parameter with `Depends` will be a dependency and automatically activate the funciton inside it when the function is called.
+
+> When a parameter is set as a dependency it will not be a path parameter or a query parameter.
+
+So, after that we can use the session through the `db` variable.
+
+But first we need to `serialize` the request body.
+
+> Serialization is the process of converting data from one format to another.
+
+When the request body is received it will be in json format which is defined by the `todo_request` schema. We can convert it using the `Todo` Model we created for our database.
+
+So, let's import the `Todo` model form `todo/models.py` file.
+
+But there is a conflict there is another class named `Todo` in the `todo/schemas.py` file.
+
+So, we can either rename one class in their file or just use `as` to rename after importing them.
+
+I did the later one.
+
+Now to convert the request body to the `Todo` model we can follow the following steps,
+
+```python {.line-numbers}
+#backend/todo/router.py
+new_todo = Todo(
+    title=request.title,
+    description=request.description,
+    completed=request.completed
+)
+```
+
+In the todo model we have a `title`, `description` and `completed` field and we are getting the reuqest body from the user that has the `request.title`, `request.description` and `request.completed` field.
+
+So, we can pass them to the `Todo` model and it'll be converted to the `Todo` model.
+
+And then we can add it to the database, commit it and refresh it.
+
+```python {.line-numbers}
+#backend/todo/router.py
+db.add(new_todo)
+db.commit()
+db.refresh(new_todo)
+```
+
+> `db.add(new_todo)` will add the new todo to the database.
+> `db.commit()` will commit the changes to the database.
+> `db.refresh(new_todo)` will refresh the new todo in the database.
+
+Then we can return the new todo to the user as confirmation.

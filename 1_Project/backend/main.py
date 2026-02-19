@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from enum import Enum
 from fastapi.middleware.cors import CORSMiddleware
 from todo.router import router
+from database import Base, engine
+from todo import models
 app = FastAPI()
 
 app.add_middleware(
@@ -18,3 +20,4 @@ app.include_router(router, prefix="/api")
 async def root():
     return {"message": "Welcome"}
 
+models.Base.metadata.create_all(bind=engine)
