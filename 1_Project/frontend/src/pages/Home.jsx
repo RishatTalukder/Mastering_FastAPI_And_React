@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import NewTodo from "../components/NewTodo";
 
 const Home = () => {
   const [data, setData] = useState([]);
@@ -9,7 +10,7 @@ const Home = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:8000/api/todo/items/3");
+      const response = await axios.get("http://localhost:8000/api/todo/");
       console.log(response.data);
       setData(response.data);
     } catch (error) {
@@ -28,14 +29,17 @@ const Home = () => {
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
-  return <div>
-    <h1>Home</h1>
-    <ul>
-      {data.map((item) => (
-        <li key={item.id}>{item.title}</li>
-      ))}
-    </ul>
-  </div>;
+  return (
+    <div>
+      <h1>Home</h1>
+      <NewTodo setData={setData}/>
+      <ul>
+        {data.map((item) => (
+          <li key={item.id}>{item.title}</li>
+        ))}
+      </ul>
+    </div>
+  );
 };
 
 export default Home;

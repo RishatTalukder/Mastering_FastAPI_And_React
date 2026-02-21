@@ -1623,3 +1623,297 @@ db.refresh(new_todo)
 > `db.refresh(new_todo)` will refresh the new todo in the database.
 
 Then we can return the new todo to the user as confirmation.
+
+So, as we now have a way to create data in the database we should be able to get data from the database too.
+
+## Getting all the data from the database
+
+To get all the data from the database we can follow the following steps,
+
+- We access the database using the `get_db` function.
+- Go to the `todo` table and get all the data from it.
+- Return the data to the user.
+
+We already have a `endpoint` to get all the data from the database.
+
+```python {.line-numbers}
+#backend/todo/router.py
+
+... 
+
+@router.get(
+    "/",
+    response_model=list[Todo],
+    summary="Get all todo items",
+)
+async def root(db: Session = Depends(get_db)):
+    """
+    - **This endpoint will return a list of all todo items in the database.**
+    """
+
+    return db.query(TodoModel).all()
+...
+```
+
+> `db.query(TodoModel).all()` will return all the data from the `todo` table in the database.
+
+Now, we can test it by going to the `http://127.0.0.1:8000/docs` and clicking on the `Try it out` button and clicking on the `Get all todo items` endpoint.
+
+Well, as we can make new todos and get all the todos we should be able to update and delete todos too.
+
+But before doing that let's update the frontend app, So, that we can send and receive data from the backend.
+
+## Getting A New Todo
+
+Go to the src folder and make a new folder named `components`. Inside that make a new component named `NewTodo.jsx`.
+
+Now, open the `NewTodo.jsx` file and write the following code,
+
+```jsx {.line-numbers}
+import React from 'react'
+
+const NewTodo = () => {
+  return (
+    <div>
+      New Todo
+    </div>
+  )
+}
+
+export default NewTodo
+```
+
+Then import it in the `Home.jsx` file.
+
+```jsx {.line-numbers}
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import NewTodo from "../components/NewTodo";
+
+const Home = () => {
+    
+
+    ... 
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  return (
+    <div>
+      <h1>Home</h1>
+      {/* <NewTodo /> */}
+      <NewTodo setData={setData}/>
+      <ul>
+        {data.map((item) => (
+          <li key={item.id}>{item.title}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default Home;
+```
+
+> Import the `NewTodo` component in the `Home.jsx` file and maybe we might need to to change the `data` state because when we add a new todo it should also be rendered in the screen.
+
+So, let's send some data to the backend.
+
+```jsx {.line-numbers}
+import axios from "axios";
+import React, { useState } from "react";
+
+const NewTodo = ({ setData }) => {
+  const handleAddTodo = async (e) => {
+    e.preventDefault();
+
+    const formElement = e.currentTarget;
+    const form = new FormData(formElement);
+    const title = form.get("title");
+
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/api/todo/new_todo/",
+        {
+          title: title,
+          description: "",
+          completed: false,
+        },
+      );
+      const newTodo = response.data;
+      console.log(title);
+      setData((prev) => {
+        return [newTodo,...prev];
+      });
+
+      formElement.reset();
+    } catch (error) {
+      console.log(error);
+    } 
+  };
+  return (
+    <div>
+      <form onSubmit={handleAddTodo}>
+        <input type="text" placeholder="new todo" name="title" />
+        <button type="submit">Add</button>
+      </form>
+    </div>
+  );
+};
+
+export default NewTodo;
+```
+
+Let's break it down.
+
+First we have to make form.
+
+```jsx {.line-numbers}
+<div>
+      <form onSubmit={handleAddTodo}>
+        <input type="text" placeholder="new todo" name="title" />
+        <button type="submit">Add</button>
+      </form>
+    </div>
+```
+
+Then we have to send the form data to the backend but to do that we need to get the data from the form.
+
+```jsx {.line-numbers}
+const handleAddTodo = async (e) => {
+    e.preventDefault();
+
+    const formElement = e.currentTarget;
+    const form = new FormData(formElement);
+    const title = form.get("title");
+    
+
+    ...
+```
+
+This will return the title of the todo.
+
+Now, we can send the data to the backend.
+
+But we have to send it in a very specific format. Where do we find th format?
+
+In the `backend` docs. So, let's go there.
+
+![alt text](image-7.png)
+
+See, as we have nicely documented the api endpoint we can now just copy the `request body format` and paste it in the `handleAddTodo` function.
+
+```json
+{
+  "title": "string",
+  "description": "string",
+  "completed": true
+}
+```
+
+and now we just replace the `title` with the `title` we got from the form.
+
+```jsx {.line-numbers}
+const handleAddTodo = async (e) => {
+    e.preventDefault();
+
+    const formElement = e.currentTarget;
+    const form = new FormData(formElement);
+    const title = form.get("title");  
+
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/api/todo/new_todo/",
+        {
+          title: title,
+          description: "",
+          completed: false,
+        },
+      );
+      const newTodo = response.data;
+      console.log(title);
+      setData((prev) => {
+        return [newTodo,...prev];
+      });
+
+      formElement.reset();
+    } catch (error) {
+      console.log(error);
+    }
+    }
+}
+```
+
+We will use the `setData` function to update the state and also use the axios `post` method to send the data to the backend.
+
+This method take two arguments, the first one is the url and the second one is the data we want to send to the backend.
+
+Also, we can set the `headers` for the request.
+
+After all that we reset the form.
+
+And we are done.
+
+Also, when the user fetches the data I configured the endpoint as such that the data will be return in descending order of the `ID` of the todo.
+
+
+```python {.line-numbers}
+#backend/todo/router.py
+@router.get(
+    "/",
+    response_model=list[Todo],
+    summary="Get all todo items",
+)
+async def root(db: Session = Depends(get_db)):
+    """
+    - **This endpoint will return a list of all todo items in the database.**
+    """
+
+    return db.query(TodoModel).order_by(TodoModel.id.desc()).all()
+...
+```
+
+> By the query method we are saying that we want to do query on the `TodoModel` table and order it by the `id` column in descending order and return all the data.
+
+## Updating the data
+
+Let's make an endpoint to update the data.
+
+```python {.line-numbers}
+#backend/todo/router.py
+
+@router.put(
+    "/{item_id}/update",
+    response_model=Todo,
+    summary="Update a todo item",
+)
+async def update_todo(
+    item_id: int,
+    todo: TodoUpdate,
+    db: Session = Depends(get_db),
+):
+    """
+    - **This endpoint will update a todo item in the database.**
+    """
+
+    todo_model = db.query(TodoModel).filter(TodoModel.id == item_id).first()
+    todo_model.title = todo.title
+    todo_model.description = todo.description
+    todo_model.completed = todo.completed
+    db.commit()
+    db.refresh(todo_model)
+    return todo_model
+```
+
+Here as we want to update the data we use the `put` method we must need to pass the `item_id` as a path parameter to find the todo item we want to update.
+
+Then use have to query and filter out the todo item we want to update.
+
+And then set the request body to the todo item we want to update.
+
+Also, It's a good practice to name the paths by their method.
+
+> You can set the path as `/method/parameter` or `/parameter/method`. I like the later one.
+
+Noice!!
+
+So, now we can make a form to update the data in the frontend.

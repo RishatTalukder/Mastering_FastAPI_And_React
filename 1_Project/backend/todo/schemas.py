@@ -6,6 +6,9 @@ class Todo(BaseModel):
     description: str
     completed: bool
 
+    class Config:
+        from_attributes = True
+
 class Todo_Request(BaseModel):
     title: str
     description: str

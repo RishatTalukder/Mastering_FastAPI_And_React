@@ -11,17 +11,17 @@ router = APIRouter(
     tags=["todo"],
 )
 
-
 @router.get(
     "/",
     response_model=list[Todo],
     summary="Get all todo items",
 )
-async def root():
+async def root(db: Session = Depends(get_db)):
     """
     - **This endpoint will return a list of all todo items in the database.**
     """
-    return dummy_todo
+
+    return db.query(TodoModel).order_by(TodoModel.id.desc()).all()
 
 
 @router.get("/items/{item_id}")
@@ -57,12 +57,24 @@ async def create_todo(request: Todo_Request, db: Session = Depends(get_db)):
     return new_todo
 
 
-@router.post(
-    "/new_todo/{id}",
+@router.put(
+    "/{item_id}/update",
+    response_model=Todo,
+    summary="Update a todo item",
 )
 async def update_todo(
-    todo: Todo_Request = Body(...),
-    id: int = Path(..., title="The ID of the todo to update"),
-    query: str | None = Query(None, title="An optional query string"),
+    item_id: int,
+    todo: Todo_Request,
+    db: Session = Depends(get_db),
 ):
-    return {"id": id, "data": todo, "query": query}
+    """
+    - **This endpoint will update a todo item in the database.**
+    """
+
+    todo_model = db.query(TodoModel).filter(TodoModel.id == item_id).first()
+    todo_model.title = todo.title
+    todo_model.description = todo.description
+    todo_model.completed = todo.completed
+    db.commit()
+    db.refresh(todo_model)
+    return todo_model
