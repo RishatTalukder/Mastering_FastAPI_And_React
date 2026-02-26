@@ -1287,7 +1287,7 @@ You can define them like this,
 ```python {.line-numbers}
 #backend/todo/router.py
 
-from fastapi import APIRouter, status, Response, query, path, Body
+from fastapi import APIRouter, status, Response, Query, Path, Body
 
 ...
 
@@ -1329,22 +1329,471 @@ Now, take a look at the `docs`, you'll see the description for the `id` paramete
 
 We've talked a lot about these metadata stuff where is the good stuff?
 
-# Database
+# Understanding Databases
+
+Before we start using FastAPI with SQLAlchemy, we need to understand what a database actually is and how data is structured inside it.
+
+This is not a DBA-level explanation.
+This is a **developer-focused foundation** just enough theory to make everything else make sense.
+
+
+# What Is a Database?
+
+At its core, a database is a structured way to store data so that it can be:
+
+* Saved permanently
+* Retrieved efficiently
+* Updated safely
+* Organized logically
+
+Imagine you are building a Todo app.
+
+You could store your todos inside:
+
+* A Python list
+* A JSON file
+* A text file
+
+But what happens when:
+
+* The server restarts?
+* Multiple users use the app?
+* You need to search thousands of records?
+* You need relationships between data?
+
+That’s where databases come in.
+
+A database is built to handle structured data reliably and efficiently.
+
+# Tables, Rows, and Columns
+
+Most modern databases (like PostgreSQL, MySQL, SQLite) are relational databases.
+
+They store data in **tables**.
+
+You can think of a table like an Excel sheet.
+
+| id | title     | completed |
+| -- | --------- | --------- |
+| 1  | Learn API | false     |
+| 2  | Sleep     | true      |
+
+### Table
+
+A table is a collection of related data.
+
+Example:
+
+* `users`
+* `todos`
+* `posts`
+
+Each table represents one type of entity.
+
+### Row (Record)
+
+A row represents a single entry in a table.
+
+Example:
+
+```
+id: 1
+title: Learn API
+completed: false
+```
+
+That entire set is one row.
+
+### Column (Attribute)
+
+A column represents a property of the table.
+
+For a `users` table:
+
+| id | name | email |
+
+* `id` is a column
+* `name` is a column
+* `email` is a column
+
+Each column defines what type of data is stored.
+
+# Primary Keys & Constraints
+
+Now that we understand tables, let’s talk about identity.
+
+## What Is a Primary Key?
+
+A primary key is a column that uniquely identifies each row in a table.
+
+Example:
+
+| id | title |
+| -- | ----- |
+| 1  | Learn |
+| 2  | Sleep |
+
+Here, `id` is the primary key.
+
+It has two important rules:
+
+* It must be unique
+* It cannot be null
+
+Without a primary key, we wouldn’t know which specific row to update or delete.
+
+Imagine having 20 todos named “Study”.
+
+Which one do you delete?
+
+That’s why IDs exist.
+
+## Auto Increment
+
+In most systems, the database automatically generates IDs:
+
+1
+2
+3
+4
+
+This ensures uniqueness without manual effort.
+
+## Constraints
+
+Constraints protect data integrity.
+
+Common ones:
+
+* **NOT NULL** → Value cannot be empty
+* **UNIQUE** → No duplicates allowed
+* **DEFAULT** → Assign default value if none given
+
+Example:
+
+An email column might be:
+
+* NOT NULL
+* UNIQUE
+
+This prevents duplicate accounts.
+
+## Data Integrity
+
+Data integrity means:
+
+> The data inside your database remains valid and consistent.
+
+Constraints enforce rules to prevent bad data.
+
+# Why One Table Is Not Enough
+
+In real applications, you rarely have just one table.
+
+Imagine a real system:
+
+* Users
+* Todos
+* Comments
+* Posts
+
+Storing everything in one table would be chaotic and inefficient.
+
+So we separate concerns.
+
+Example:
+
+### Users Table
+
+| id | name  |
+| -- | ----- |
+| 1  | Alice |
+
+### Todos Table
+
+| id | title | user_id |
+| -- | ----- | ------- |
+| 1  | Learn | 1       |
+
+Now we introduce a new concept.
+
+# Foreign Keys
+
+A foreign key is a column that references the primary key of another table.
+
+In the example above:
+
+`todos.user_id` references `users.id`
+
+That means:
+
+This todo belongs to the user with id = 1.
+
+## Referential Integrity
+
+Referential integrity ensures:
+
+You cannot reference a user that does not exist.
+
+If a user is deleted, the database can:
+
+* Prevent deletion
+* Delete related todos
+* Set the value to NULL
+
+This prevents broken relationships.
+
+# Table Relationships
+
+Now we combine everything.
+
+Relationships describe how tables connect to each other.
+
+There are three main types.
+
+# 1️⃣ One-to-One Relationship
+
+Example:
+
+User → Profile
+
+Each user has exactly one profile.
+
+Profile table:
+
+| id | user_id | bio |
+
+Each profile belongs to one user, and each user has one profile.
+
+This is less common but useful for splitting large tables.
+
+# 2️⃣ One-to-Many Relationship
+
+This is the most common type.
+
+Example:
+
+User → Many Todos
+
+One user can create many todos.
+
+Diagram:
+
+```
+User (1) ---- (∞) Todo
+```
+
+But each todo belongs to only one user.
+
+This is implemented using a foreign key.
+
+`todos.user_id` → `users.id`
+
+# 3️⃣ Many-to-Many Relationship
+
+Example:
+
+Posts ↔ Tags
+
+* One post can have many tags
+* One tag can belong to many posts
+
+This cannot be solved with a single foreign key.
+
+We use a third table (called a junction table):
+
+Post_Tag
+
+| post_id | tag_id |
+
+This table connects both sides.
+
+Diagram:
+
+```
+Post (∞) ---- (∞) Tag
+```
+
+Perfect.
+This is exactly the kind of conceptual clarity that makes a backend series feel professional.
+
+Here’s your long-form, theory-focused note on ORM — no code, just understanding.
+
+---
+
+# Understanding ORM (Object Relational Mapping)
+
+Before we use SQLAlchemy in FastAPI, we need to understand one very important concept:
+
+**ORM — Object Relational Mapping**
+
+If you understand ORM properly, backend development becomes logical instead of magical.
+
+# The Core Problem ORM Solves
+
+Relational databases uses a different language to manipulate data. They are typically referred to as `SQL(Structured Query Language)`.
+
+This can be a issue because Now you can `HTML, CSS, JavaScript` For frontend, `Python/js/php/any other backend language` For backend and `SQL` For Database.
+
+You have atleast `4` languages to deal with and most of the time the backend you are using doen't have language support for `SQL` and it can cause a lot of headache. Wouldn't it be nice if we can use the backend language to deal with the database directly?
+
+This is where ORM comes into play. ORM is a translator that allows you to write logical database queries using the backend language.
+
+Some popular ORM libraries:
+
+- `SQLAlchemy (Python)`.
+- `Django ORM (Python)`.
+- `Prisma (TypeScript/JavaScript)`.
+- `Sequelize (JavaScript)`.
+- `Eloquent (PHP)`.
+- `Doctrine (PHP)`.
+
+As you can see almost all language that has backend capabilities has multiple ORM libraries.
+
+By using ORM you can stay in your backend language and not worry about the database. ORM exists to bridge that gap.
+
+# What Is an ORM?
+
+ORM stands for:
+
+> Object Relational Mapping
+
+It is a tool that maps:
+
+| Programming Concept | Database Concept         |
+| ------------------- | ------------------------ |
+| Class               | Table                    |
+| Object              | Row                      |
+| Attribute           | Column                   |
+| Object relationship | Foreign key relationship |
+
+Instead of writing raw SQL queries, you interact with the database using normal Python objects.
+
+ORM translates your Python operations into SQL behind the scenes.
+
+Imagine building a large application.
+
+Without ORM, you would need to:
+
+* Write raw SQL for every query
+* Manually map query results to Python objects
+* Handle relationships manually
+* Worry about SQL injection risks
+* Manage database-specific syntax differences
+
+This becomes repetitive, error-prone, and difficult to maintain.
+
+ORM solves these problems.
+
+# The Big Idea
+
+ORM allows you to think in terms of your application, not your database.
+
+Instead of thinking:
+
+> “Insert into users (name, email) values (...)”
+
+You think:
+
+> “Create a new User object.”
+
+Instead of thinking:
+
+> “Select * from todos where user_id = 1”
+
+You think:
+
+> “Give me this user’s todos.”
+
+It changes your mental model from query-based to object-based.
+
+* Cleaner
+* Easier to understand
+* Easier to maintain
+* More scalable
+
+Another nice thing about ORMs are they can be used with almost any database.
+
+Most of the time different databases can have SQL syntax differences. Although, these differences are usually minor. They can cause you application to fail if you are migrating from one database to another. 
+
+ORMs abstract away these differences. If a OMR has support for a database, it can be used with that database anytime and most of the time ORMs have support for multiple databases.
+
+And if your ORM doesn’t support a database, you can find external packages that do. Most Orms have external `dialects` that support a wide range of databases.
+
+# The Trade-Off
+
+ORM is powerful, but it is not magic.
+
+Important to understand:
+
+* ORM still generates SQL
+* SQL still runs underneath
+* Poor database design still causes problems
+
+ORM does not replace database knowledge.
+
+It makes database interaction more developer-friendly.
+
+If you don’t understand relationships and keys, ORM will feel confusing.
+
+If you do understand them, ORM feels elegant.
+
+Almost every modern backend framework uses ORM.
+
+Django has its own ORM.
+Flask often uses SQLAlchemy.
+FastAPI commonly uses SQLAlchemy.
+
+ORM is industry standard.
+
+In rare cases:
+
+* Extremely complex reporting queries
+* Very high-performance data systems
+* Heavy analytics pipelines
+
+Developers may use raw SQL for fine-tuned control.
+
+But for most web applications, ORM is the correct choice.
+
+It allows developers to:
+
+* Think in objects
+* Design clean systems
+* Manage relationships naturally
+* Scale applications confidently
+
+Understanding ORM is a major step in becoming a real backend developer.
+
+## Simple Mapping for Developers
+
+| Database Concept | Python Equivalent |
+| ---------------- | ----------------- |
+| Table            | Class             |
+| Row              | Object            |
+| Column           | Attribute         |
+
+
+# Setting up a Database
+
+So, let's setup a database.
 
 FastApi does not provide you with a stand alone `ORM` to work with databases.
 
 So, we have freedom to choose any `ORM` that we want.
 
-For the time being, we have two choices:
+For the time being, we have some choices:
 
-- `SqlModel`
-- `SQLAlchemy`
+- `SqlModel`. 
+- `SQLAlchemy`.
+- `PeeWee`.
+- `TortoiseORM`.(One day this will become one of the best, if not the best)
 
 `SqlModel` is made by the creator of fastapi and internally made with `SqlAlchemy` and `pydantic`. It's also documented in the `fastapi` documentations.
 
-But a lot of it still not a mature library. Although easy to use a lot of depp ORM concepts are abstracted away.
+Although easy to use a lot of deep ORM concepts are abstracted away. 
 
-So, I'll use `SqlAlchemy` for this project.
+So, I'll use `SqlAlchemy` for this project. The industry standard and maybe the most popular python ORM.
 
 run the following command to install `sqlalchemy`,
 
@@ -1352,9 +1801,7 @@ run the following command to install `sqlalchemy`,
 pip install SQLAlchemy
 ```
 
-So, let's setup a database.
-
-## Setting up a database
+## Setting up The ORM
 
 Make a new file and name it `database.py` in the root `backend` folder.
 
