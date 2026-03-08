@@ -1873,7 +1873,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 > `autocommit=False` means that we don't want to commit the changes to the database automatically. We want to commit the changes manually so that unwanted changes are not committed to the database.
 
-> Flush means Sending the data to the database memory before saving ir permanently to the database. It controls when the data transfer will happen. By setting it to `False` we are saying until we explicitly `commit` the changes to the database do not send them to the database.
+> Flush means Sending the data to the database memory before saving it permanently to the database. It controls when the data transfer will happen. By setting it to `False` we are saying until we explicitly `commit` the changes to the database do not send them to the database.
 
 > `bind=engine` means that we want to bind the session to the engine.
 
@@ -2364,3 +2364,130 @@ Also, It's a good practice to name the paths by their method.
 Noice!!
 
 So, now we can make a form to update the data in the frontend.
+
+Now, I'll do it in a different way. I'll make a page for creating new todo and updating the todo.
+
+I think both can be done with a single page.
+
+# Setting up React Router
+
+To set up react router we need to install the `react-router` package. It's already installed if you followes this article.
+
+If you didn't.
+
+```bash
+npm i react-router
+
+```
+
+Now we have to wrap our app in a router.
+
+```jsx {.line-numbers}
+//src/main.jsx
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import App from './App.jsx'
+import { BrowserRouter as Router } from 'react-router' //BrowserRouter is used to wrap the app in a router
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <Router>
+      <App />
+    </Router>
+  </StrictMode>,
+)
+```
+
+Now we can define the routes in the `app.jsx` like below.
+
+```jsx {.line-numbers}
+//src/App.jsx
+import Home from "./pages/Home";
+import { Routes, Route } from "react-router";
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+    </Routes>
+  );
+}
+
+export default App;
+```
+
+And eeverything should work just fine. Now, we can make a new page for creating and updating the todo. It's the same form for both.
+
+So, let's make a new file named `pages/TodoForm.jsx`.
+
+```jsx {.line-numbers}
+//src/pages/TodoForm.jsx
+import React from 'react'
+
+const TodoForm = () => {
+  return (
+    <div>
+      Noice
+    </div>
+  )
+}
+
+export default TodoForm
+```
+
+Now, we have to make a new route for this page.
+
+```jsx {.line-numbers}
+//src/App.jsx
+import Home from "./pages/Home";
+import { Routes, Route } from "react-router";
+import TodoForm from "./pages/TodoForm";
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/new" element={<TodoForm />} />
+    </Routes>
+  );
+}
+
+export default App;
+```
+
+Let's fix the `home` page and add a button to make a new todo. When clicked it'll take us to the new todo page.
+
+```jsx {.line-numbers}
+//src/pages/Home.jsx
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import NewTodo from "../components/NewTodo";
+import { Link } from "react-router"; 
+
+const Home = () => {
+  return (
+    <div>
+      <h1>Home</h1>
+      {/* <NewTodo setData={setData}/> */}
+      <Link to={'/new'}> 
+        Add new
+      </Link>
+      <ul>
+        {data.map((item) => (
+          <li key={item.id}>{item.title}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default Home;
+```
+
+> The `Link` component is used to create a link to another page. It's a wrapper around the `a` tag.
+
+This is the same as the `a` tag but it doesn't reload the page when clicked.
+
+This will allow us to go to the new todo page without reloading the page.
+
+Now, let's make a form to add and update the todo.

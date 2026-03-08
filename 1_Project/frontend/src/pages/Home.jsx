@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import NewTodo from "../components/NewTodo";
+import { Link } from "react-router";
 
 const Home = () => {
   const [data, setData] = useState([]);
@@ -32,7 +33,10 @@ const Home = () => {
   return (
     <div>
       <h1>Home</h1>
-      <NewTodo setData={setData}/>
+      {/* <NewTodo setData={setData}/> */}
+      <Link to={'/new'}>
+        Add new
+      </Link>
       <ul>
         {data.map((item) => (
           <li key={item.id}>{item.title}</li>
