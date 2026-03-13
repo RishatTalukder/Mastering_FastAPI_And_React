@@ -11,7 +11,7 @@ const Home = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:8000/api/todo/");
+      const response = await axios.get("/api/todo/");
       console.log(response.data);
       setData(response.data);
     } catch (error) {
@@ -39,7 +39,12 @@ const Home = () => {
       </Link>
       <ul>
         {data.map((item) => (
-          <li key={item.id}>{item.title}</li>
+          <li key={item.id}>
+            {item.title}
+            <Link to={`/edit/${item.id}`} state={{ todo: item }}>
+              <button>Edit</button>
+            </Link>
+          </li>
         ))}
       </ul>
     </div>

@@ -2582,3 +2582,207 @@ export default TodoForm;
 And that's done. Now what we can do is just setup it up like we want to update a single todo.
 
 So, first we should add a button right beside the todo title to update the todo.
+
+```jsx {.line-numbers}
+//src/pages/Home.jsx
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import NewTodo from "../components/NewTodo";
+import { Link } from "react-router";
+
+const Home = () => {
+  
+  ...
+
+  return (
+    <div>
+      <h1>Home</h1>
+      {/* <NewTodo setData={setData}/> */}
+      <Link to={'/new'}>
+        Add new
+      </Link>
+      <ul>
+        {data.map((item) => (
+          <li key={item.id}>
+            {item.title}
+
+            {/* add a button to update the todo */}
+            <Link to={`/edit/${item.id}`} state={{ todo: item }}> 
+              <button>Edit</button>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default Home;
+```
+
+> The `state` prop is used to pass data to the page that will be rendered when the link is clicked.
+
+I'm sending the state of the todo to the page because I want to prefill the form with the data of the todo.
+
+Now, let's add a new path to the router for updating the todo.
+
+```jsx {.line-numbers}
+//src/App.jsx
+import Home from "./pages/Home";
+import { Routes, Route } from "react-router";
+import TodoForm from "./pages/TodoForm";
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/new" element={<TodoForm />} />
+      <Route path="/edit/:id" element={<TodoForm />} />
+    </Routes>
+  );
+}
+
+export default App;
+```
+
+I reused the `TodoForm` component for both the `new` and `edit` routes.
+
+Now, let's configure the `TodoForm` component to update the todo.
+
+```jsx {.line-numbers}
+//src/components/TodoForm.jsx
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate, useLocation } from "react-router";
+
+const TodoForm = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const todo = location.state?.todo;
+  const isEdit = !!todo;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const formElement = e.currentTarget;
+    const form = new FormData(formElement);
+    const title = form.get("title");
+    const description = form.get("description");
+    const completed = form.get("completed") === "on";
+
+    try {
+      if (isEdit) {
+        await axios.put(`http://localhost:8000/api/todo/${todo.id}/update`, {
+          title: title,
+          description: description,
+          completed: completed,
+        });
+      } else {
+        await axios.post("http://localhost:8000/api/todo/new_todo", {
+          title: title,
+          description: description,
+          completed: completed,
+        });
+      }
+      navigate("/");
+    } catch (err) {
+      setError(`Failed to ${isEdit ? 'update' : 'create'} todo`);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="container mt-5">
+      <h2>{isEdit ? 'Edit Todo' : 'Add New Todo'}</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3">
+          <label htmlFor="title" className="form-label">
+            Title
+          </label>
+          <input
+            type="text"
+            className="form-control"
+            id="title"
+            name="title"
+            defaultValue={todo?.title || ''}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="description" className="form-label">
+            Description
+          </label>
+          <textarea
+            className="form-control"
+            id="description"
+            name="description"
+            rows="3"
+            defaultValue={todo?.description || ''}
+          />
+        </div>
+        <div className="mb-3 form-check">
+          <input
+            type="checkbox"
+            className="form-check-input"
+            id="completed"
+            name="completed"
+            defaultChecked={todo?.completed || false}
+          />
+          <label className="form-check-label" htmlFor="completed">
+            Completed
+          </label>
+        </div>
+        {error && <div className="alert alert-danger">{error}</div>}
+        <button type="submit" className="btn btn-primary" disabled={loading}>
+          {loading ? (isEdit ? 'Updating...' : 'Adding...') : (isEdit ? 'Update Todo' : 'Add Todo')}
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default TodoForm;
+```
+
+Let me explain what's happening here: 
+
+1. We're using the `useLocation` hook to get the location of the current page.
+
+3. Inside the location object we will get the state object which should have the todo object.
+
+4. If it is an edit request, it'll certainly contain the `todo` state object.
+
+5. If it is an add request, it won't contain the `todo` state object.
+
+Now, we just have to check in all the places where the data can be prefilled and render the default value of the input field if there is a todo object.
+
+One thing I want to do before going further is do something for the repeated `http://localhost:8000`.
+
+Everytime we make a request to the server, we have to add the `http://localhost:8000` to the url.
+
+We can configure this in many ways but I'll do it in the `vite.config.js` file.
+
+```js {.line-numbers}
+//vite.config.js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    // adding a proxy for the backend
+    proxy: {
+      '/api': 'http://localhost:8000',
+    },
+  },
+})
+```
+
+Now, we can remove the `http://localhost:8000` from every request and we'll be good to go.

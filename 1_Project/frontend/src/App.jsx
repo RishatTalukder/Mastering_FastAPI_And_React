@@ -7,6 +7,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/new" element={<TodoForm />} />
+      <Route path="/edit/:id" element={<TodoForm />} />
     </Routes>
   );
 }
