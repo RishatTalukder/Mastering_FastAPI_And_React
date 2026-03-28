@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class Todo(BaseModel):
     id: int
@@ -6,10 +6,13 @@ class Todo(BaseModel):
     description: str
     completed: bool
 
-    class Config:
-        from_attributes = True
-
 class Todo_Request(BaseModel):
     title: str
     description: str
     completed: bool
+
+class Todo_Title(BaseModel):
+    id: int
+    title: str
+
+    model_config = ConfigDict(from_attributes=True)

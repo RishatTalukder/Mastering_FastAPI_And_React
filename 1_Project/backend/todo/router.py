@@ -1,9 +1,9 @@
 from fastapi import APIRouter, status, Response, Query, Path, Body, Depends
 from utils.dummy import dummy_todo
 from enum import Enum
-from todo.schemas import Todo, Todo_Request
+from todo.schemas import Todo, Todo_Request, Todo_Title
 from database import get_db
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 from todo.models import Todo as TodoModel
 
 router = APIRouter(
@@ -13,7 +13,7 @@ router = APIRouter(
 
 @router.get(
     "/",
-    response_model=list[Todo],
+    response_model=list[Todo_Title],
     summary="Get all todo items",
 )
 async def root(db: Session = Depends(get_db)):
@@ -21,8 +21,13 @@ async def root(db: Session = Depends(get_db)):
     - **This endpoint will return a list of all todo items in the database.**
     """
 
-    return db.query(TodoModel).order_by(TodoModel.id.desc()).all()
-
+    # return db.query(TodoModel).order_by(TodoModel.id.desc()).all()
+    #returning only ID and title for each todo item
+    return (
+        db.query(TodoModel)
+        .order_by(TodoModel.id.desc())
+        .all()
+    )
 
 @router.get("/items/{item_id}")
 async def read_item(item_id: int, response: Response) -> dict:
@@ -78,3 +83,8 @@ async def update_todo(
     db.commit()
     db.refresh(todo_model)
     return todo_model
+
+@router.get('/{id}', response_model=Todo)
+async def get_todo(id: int, db: Session = Depends(get_db)):
+    todo = db.query(TodoModel).filter(TodoModel.id == id).first()
+    return todo

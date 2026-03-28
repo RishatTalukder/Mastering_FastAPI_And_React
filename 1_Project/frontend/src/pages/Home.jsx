@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import NewTodo from "../components/NewTodo";
 import { Link } from "react-router";
+import { API } from "../api/api";
 
 const Home = () => {
   const [data, setData] = useState([]);
@@ -11,7 +12,7 @@ const Home = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("/api/todo/");
+      const response = await API.get("/todo/");
       console.log(response.data);
       setData(response.data);
     } catch (error) {

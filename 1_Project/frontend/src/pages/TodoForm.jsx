@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router";
+import { API } from "../api/api";
 
 const TodoForm = () => {
   const [loading, setLoading] = useState(false);
@@ -23,13 +24,13 @@ const TodoForm = () => {
 
     try {
       if (isEdit) {
-        await axios.put(`api/todo/${todo.id}/update`, {
+        await API.put(`/todo/${todo.id}/update`, {
           title: title,
           description: description,
           completed: completed,
         });
       } else {
-        await axios.post("api/todo/new_todo", {
+        await API.post("/todo/new_todo", {
           title: title,
           description: description,
           completed: completed,

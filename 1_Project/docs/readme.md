@@ -2766,23 +2766,69 @@ One thing I want to do before going further is do something for the repeated `ht
 
 Everytime we make a request to the server, we have to add the `http://localhost:8000` to the url.
 
-We can configure this in many ways but I'll do it in the `vite.config.js` file.
+We can configure this many ways but one easy way is to use axios and create a base url.
 
 ```js {.line-numbers}
-//vite.config.js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+//src/api/api.js
+import axios from "axios";
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    // adding a proxy for the backend
-    proxy: {
-      '/api': 'http://localhost:8000',
-    },
-  },
+const API = axios.create({
+  baseURL: "http://localhost:8000/api/",
 })
+
+export default api;
+ 
 ```
 
-Now, we can remove the `http://localhost:8000` from every request and we'll be good to go.
+Now, we can use this `API` object to make the requests. instead of `axios` object and writting `http://localhost:8000/api` every time.
+
+Before going into the next part there's one thing I want show you. 
+
+We are passing the state using the `Link` component and getting the state using the `useLocation` hook in the page. But this is not a good practice. We should fetch the todo from the backend and also we should just render the `title` of the todo in the home page. We don't have to fetch the whole todo list this can be very heavy on the server. So, why don't we fix these issues first.
+
+So, let's confifure the root route to send only the `titles` of the todo.
+
+So, we need to make a new schema.
+
+```python {.line-numbers}
+#backend/todo/schema.py
+from pydantic import BaseModel, ConfigDict
+
+class Todo_Title(BaseModel):
+    id: int
+    title: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+```
+
+> **Note**: `from_attributes=True` means that the schema will be generated from the class attributes.
+
+Simply, when we configure the `from_attributes=True` it will read from both dict and class attributes.
+
+By default pydantic will `only read from dict`. Even though in the docs you should not see any issues if you don't do this. But it's best practice to set the `from_attributes=True` so that the schema is generated from both dict and class attributes.
+
+Now, we just need to change the response model of the `root` route in `router.py` file.
+
+```python {.line-numbers}
+#backend/todo/router.py
+@router.get(
+    "/",
+    response_model=list[Todo_Title],
+    summary="Get all todo items",
+)
+async def root(db: Session = Depends(get_db)):
+    """
+    - **This endpoint will return a list of all todo items in the database.**
+    """
+
+    #returning only ID and title for each todo item
+    return (
+        db.query(TodoModel)
+        .order_by(TodoModel.id.desc())
+        .all()
+    )
+
+```
+
+Now, 
