@@ -2831,4 +2831,122 @@ async def root(db: Session = Depends(get_db)):
 
 ```
 
-Now, 
+Now, Now, the frontend will fall apart very quickly. How you ask?
+
+This is because the `Todo` schema is not the same as the `Todo_Title` schema and now the editor will not autofill the `description` field at all because the todo list won't have any.
+
+Before we manage that there should a page to see the todos.
+
+```jsx {.line-numbers}
+//frontend/src/pages/TodoDetails.jsx
+import React from 'react'
+
+const TodoDetails = () => {
+  return (
+    <div>
+      todo details
+    </div>
+  )
+}
+
+export default TodoDetails
+
+```
+
+This is a new component to see the todo details.
+
+Now, we have add a path to it and Im going make the each to do in the home page a link to the todo details page.
+
+```jsx {.line-numbers}
+//frontend/src/App.jsx
+import Home from "./pages/Home";
+import { Routes, Route } from "react-router";
+import TodoForm from "./pages/TodoForm";
+import TodoDetails from "./pages/TodoDetails";
+
+function App() {
+  return (
+    <Routes>
+      ...
+      <Route path="/todo/:id" element={<TodoDetails/>} />
+    </Routes>
+  );
+}
+
+export default App;
+
+```
+
+Now, we can see the todo details page in the `todo/:id` route.
+
+> :id is the dynamic url parameter.
+
+```jsx {.line-numbers}
+//frontend/src/pages/Home.jsx
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import NewTodo from "../components/NewTodo";
+import { Link } from "react-router";
+import { API } from "../api/api";
+
+const Home = () => {
+  ...
+  return (
+    <div>
+      <h1>Home</h1>
+      {/* <NewTodo setData={setData}/> */}
+      <Link to={'/new'}>
+        Add new
+      </Link>
+      <ul>
+        {data.map((item) => (
+          <li key={item.id}>
+            <Link to={`/todo/${item.id}`}>
+            {item.title}
+            </Link>
+            ...
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default Home;
+
+```
+
+Making the title a link to the todo details page. Whever the user clicks on the todo title it will take them to the todo details page with the `id` of the todo as a dynamic parameter.
+
+Now, we can fetch the todo details in the todo details page using this dynamic parameter. We have to make a endpoint to return only the todo we want.
+
+```python {.line-numbers}
+#backend/todo/router.py
+@router.get(
+    "/{id}",
+    response_model=Todo,
+    summary="Get todo by id",
+)
+async def get_todo(id: int, db: Session = Depends(get_db)):
+    """
+    - **This endpoint will return a todo by id.**
+    """
+    return (
+        db.query(TodoModel)
+        .filter(TodoModel.id == id)
+        .first()
+    )
+
+```
+
+Now, we can fetch the todo details in the todo details page.
+
+Now, use this in endpoint to get a single todo.
+
+```jsx {.line-numbers}
+//frontend/src/pages/TodoDetails.jsx
+import React from 'react'
+
+const TodoDetails = () => {
+  
+}

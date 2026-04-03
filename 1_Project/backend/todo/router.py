@@ -29,14 +29,6 @@ async def root(db: Session = Depends(get_db)):
         .all()
     )
 
-@router.get("/items/{item_id}")
-async def read_item(item_id: int, response: Response) -> dict:
-    if item_id > 10:
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return {"error": "item_id should be less than 10"}
-
-    return {"item_id": item_id}
-
 
 class PredefinedEndpoints(str, Enum):
     life = "life"
@@ -84,7 +76,17 @@ async def update_todo(
     db.refresh(todo_model)
     return todo_model
 
-@router.get('/{id}', response_model=Todo)
+@router.get(
+    "/{id}",
+    response_model=Todo,
+    summary="Get todo by id",
+)
 async def get_todo(id: int, db: Session = Depends(get_db)):
-    todo = db.query(TodoModel).filter(TodoModel.id == id).first()
-    return todo
+    """
+    - **This endpoint will return a todo by id.**
+    """
+    return (
+        db.query(TodoModel)
+        .filter(TodoModel.id == id)
+        .first()
+    )

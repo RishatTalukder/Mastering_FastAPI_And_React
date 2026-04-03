@@ -41,7 +41,9 @@ const Home = () => {
       <ul>
         {data.map((item) => (
           <li key={item.id}>
+            <Link to={`/todo/${item.id}`}>
             {item.title}
+            </Link>
             <Link to={`/edit/${item.id}`} state={{ todo: item }}>
               <button>Edit</button>
             </Link>

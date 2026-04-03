@@ -1,6 +1,7 @@
 import Home from "./pages/Home";
 import { Routes, Route } from "react-router";
 import TodoForm from "./pages/TodoForm";
+import TodoDetails from "./pages/TodoDetails";
 
 function App() {
   return (
@@ -8,6 +9,7 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/new" element={<TodoForm />} />
       <Route path="/edit/:id" element={<TodoForm />} />
+      <Route path="/todo/:id" element={<TodoDetails/>} />
     </Routes>
   );
 }
