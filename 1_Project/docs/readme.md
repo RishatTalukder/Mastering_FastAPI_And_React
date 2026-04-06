@@ -2943,10 +2943,230 @@ Now, we can fetch the todo details in the todo details page.
 
 Now, use this in endpoint to get a single todo.
 
+So, let's make the frontend. But I want to do that a little differently.
+
+All the `loading`, `error` and `data` states are in the `TodoDetails.jsx` file.
+
+And repeating the same thing over and over again is a waste of time. So, I'm going to use a nifty tool called `tanstack query` formally known as `React Query`.
+
+It's a great tool that will remove the need of different states and will make the code more readable and easy to maintain.
+
+Let's set it up.
+
+```bash {.line-numbers}
+pnpm add @tanstack/react-query
+```
+
+
+Now, wrap the `App` make a query client and wrap the `App` in the `QueryClientProvider` component.
+
+```jsx {.line-numbers}
+//frontend/src/main.jsx
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.jsx";
+import { BrowserRouter as Router } from "react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
+
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    <Router>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </Router>
+  </StrictMode>,
+);
+
+```
+
+Now, we can use the `tanstack query` to fetch the todo details in the todo details page.
+
+
+
 ```jsx {.line-numbers}
 //frontend/src/pages/TodoDetails.jsx
-import React from 'react'
-
+import React, { useEffect } from 'react'
+import {useParams} from 'react-router'
+import {API} from '../api/api'
+import { useState } from "react";
 const TodoDetails = () => {
+  const {id} = useParams();
+  console.log(id);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [todo, setTodo] = useState(null);
+
+  const fetchTodo = async()=>{
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await API.get(`/todo/${id}`);
+      console.log(response.data);
+      setTodo(response.data);
+    } catch (error) {
+      console.log(error);
+      setError(error);
+    } finally {
+      // always executed
+      console.log("done");
+      setLoading(false);
+      console.log(todo);
+      
+    }
+  }
+
+  useEffect(() => {
+    fetchTodo();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  if (!todo) return <div>Todo not found</div>;
   
+  return (
+    <div>
+      <h1>{todo.title}</h1>
+      <p>{todo.description}</p>
+      <p>{todo.completed ? "Completed" : "Not Completed"}</p>
+    </div>
+  )
 }
+
+export default TodoDetails
+
+```
+
+Okay now that the todo details page is set up, the todo form should also be updated to the best practice, instead of getting the data from the `todo list` now there is no todo list sent from the backend, so we have to get the data from the `todo details` page. But that will be hastle so best would be to fetch it from the backend using the `single` todo endpoint.
+
+
+```jsx {.line-numbers}
+//frontend/src/components/TodoForm.jsx
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router";
+import { API } from "../api/api";
+
+const TodoForm = () => {
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(false);
+  const [error, setError] = useState(null);
+  const [todo, setTodo] = useState(null);
+
+  const navigate = useNavigate();
+  const { id } = useParams();
+
+  const isEdit = !!id;
+
+  // fetch todo if edit mode
+  useEffect(() => {
+    if (!isEdit) return;
+
+    const fetchTodo = async () => {
+      setFetching(true);
+      try {
+        const response = await API.get(`/todo/${id}`);
+        setTodo(response.data);
+      } catch (err) {
+        setError("Failed to fetch todo");
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchTodo();
+  }, [id]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const form = new FormData(e.currentTarget);
+
+    const title = form.get("title");
+    const description = form.get("description");
+    const completed = form.get("completed") === "on";
+
+    try {
+      if (isEdit) {
+        await API.put(`/todo/${id}/update`, {
+          title,
+          description,
+          completed,
+        });
+      } else {
+        await API.post("/todo/new_todo", {
+          title,
+          description,
+          completed,
+        });
+      }
+
+      navigate("/");
+    } catch (err) {
+      setError(`Failed to ${isEdit ? "update" : "create"} todo`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // loading state while fetching todo
+  if (fetching) return <div>Loading todo...</div>;
+
+  return (
+    <div>
+      <h2>{isEdit ? "Edit Todo" : "Add New Todo"}</h2>
+
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Title</label>
+          <input
+            type="text"
+            name="title"
+            defaultValue={todo?.title || ""}
+            required
+          />
+        </div>
+
+        <div>
+          <label>Description</label>
+          <textarea
+            name="description"
+            defaultValue={todo?.description || ""}
+          />
+        </div>
+
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              name="completed"
+              defaultChecked={todo?.completed || false}
+            />
+            Completed
+          </label>
+        </div>
+
+        {error && <p>{error}</p>}
+
+        <button type="submit" disabled={loading}>
+          {loading
+            ? isEdit
+              ? "Updating..."
+              : "Adding..."
+            : isEdit
+            ? "Update Todo"
+            : "Add Todo"}
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default TodoForm;
+
+```

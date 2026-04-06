@@ -1,94 +1,118 @@
-import React, { useState } from "react";
-import axios from "axios";
-import { useNavigate, useLocation } from "react-router";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router";
 import { API } from "../api/api";
 
 const TodoForm = () => {
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const [error, setError] = useState(null);
+  const [todo, setTodo] = useState(null);
+
   const navigate = useNavigate();
-  const location = useLocation();
-  const todo = location.state?.todo;
-  const isEdit = !!todo;
+  const { id } = useParams();
+
+  const isEdit = !!id;
+
+  // fetch todo if edit mode
+  useEffect(() => {
+    if (!isEdit) return;
+
+    const fetchTodo = async () => {
+      setFetching(true);
+      try {
+        const response = await API.get(`/todo/${id}`);
+        setTodo(response.data);
+      } catch (err) {
+        setError("Failed to fetch todo");
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchTodo();
+  }, [id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const formElement = e.currentTarget;
-    const form = new FormData(formElement);
+    const form = new FormData(e.currentTarget);
+
     const title = form.get("title");
     const description = form.get("description");
     const completed = form.get("completed") === "on";
 
     try {
       if (isEdit) {
-        await API.put(`/todo/${todo.id}/update`, {
-          title: title,
-          description: description,
-          completed: completed,
+        await API.put(`/todo/${id}/update`, {
+          title,
+          description,
+          completed,
         });
       } else {
         await API.post("/todo/new_todo", {
-          title: title,
-          description: description,
-          completed: completed,
+          title,
+          description,
+          completed,
         });
       }
+
       navigate("/");
     } catch (err) {
-      setError(`Failed to ${isEdit ? 'update' : 'create'} todo`);
-      console.error(err);
+      setError(`Failed to ${isEdit ? "update" : "create"} todo`);
     } finally {
       setLoading(false);
     }
   };
 
+  // loading state while fetching todo
+  if (fetching) return <div>Loading todo...</div>;
+
   return (
-    <div className="container mt-5">
-      <h2>{isEdit ? 'Edit Todo' : 'Add New Todo'}</h2>
+    <div>
+      <h2>{isEdit ? "Edit Todo" : "Add New Todo"}</h2>
+
       <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label htmlFor="title" className="form-label">
-            Title
-          </label>
+        <div>
+          <label>Title</label>
           <input
             type="text"
-            className="form-control"
-            id="title"
             name="title"
-            defaultValue={todo?.title || ''}
+            defaultValue={todo?.title || ""}
             required
           />
         </div>
-        <div className="mb-3">
-          <label htmlFor="description" className="form-label">
-            Description
-          </label>
+
+        <div>
+          <label>Description</label>
           <textarea
-            className="form-control"
-            id="description"
             name="description"
-            rows="3"
-            defaultValue={todo?.description || ''}
+            defaultValue={todo?.description || ""}
           />
         </div>
-        <div className="mb-3 form-check">
-          <input
-            type="checkbox"
-            className="form-check-input"
-            id="completed"
-            name="completed"
-            defaultChecked={todo?.completed || false}
-          />
-          <label className="form-check-label" htmlFor="completed">
+
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              name="completed"
+              defaultChecked={todo?.completed || false}
+            />
             Completed
           </label>
         </div>
-        {error && <div className="alert alert-danger">{error}</div>}
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? (isEdit ? 'Updating...' : 'Adding...') : (isEdit ? 'Update Todo' : 'Add Todo')}
+
+        {error && <p>{error}</p>}
+
+        <button type="submit" disabled={loading}>
+          {loading
+            ? isEdit
+              ? "Updating..."
+              : "Adding..."
+            : isEdit
+            ? "Update Todo"
+            : "Add Todo"}
         </button>
       </form>
     </div>
