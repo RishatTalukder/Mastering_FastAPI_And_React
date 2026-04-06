@@ -3245,3 +3245,24 @@ export default Home;
 That's it, now we have a todo app with all the features we need.
 
 We can add a new todo, edit a todo, delete a todo and view a todo.
+
+I'm going to do some bootstrap styling to the app and make it look better.
+
+```jsx {.line-numbers}
+//frontend/src/main.jsx
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import App from './App.jsx'
+import { BrowserRouter as Router } from 'react-router'
+import "bootswatch/dist/brite/bootstrap.min.css"
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <Router>
+      <App />
+    </Router>
+  </StrictMode>,
+)
+
+```

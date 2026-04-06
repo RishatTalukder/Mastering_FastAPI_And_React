@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, Link } from "react-router";
 import { API } from "../api/api";
 
 const TodoForm = () => {
@@ -13,7 +13,6 @@ const TodoForm = () => {
 
   const isEdit = !!id;
 
-  // fetch todo if edit mode
   useEffect(() => {
     if (!isEdit) return;
 
@@ -66,55 +65,85 @@ const TodoForm = () => {
     }
   };
 
-  // loading state while fetching todo
-  if (fetching) return <div>Loading todo...</div>;
+  if (fetching)
+    return (
+      <div className="container mt-5 text-center">
+        Loading todo...
+      </div>
+    );
 
   return (
-    <div>
-      <h2>{isEdit ? "Edit Todo" : "Add New Todo"}</h2>
+    <div className="container mt-5">
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <h3 className="mb-4">
+            {isEdit ? "Edit Todo" : "Add New Todo"}
+          </h3>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Title</label>
-          <input
-            type="text"
-            name="title"
-            defaultValue={todo?.title || ""}
-            required
-          />
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label className="form-label">Title</label>
+              <input
+                type="text"
+                name="title"
+                className="form-control"
+                defaultValue={todo?.title || ""}
+                required
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label">Description</label>
+              <textarea
+                name="description"
+                className="form-control"
+                rows="3"
+                defaultValue={todo?.description || ""}
+              />
+            </div>
+
+            <div className="form-check mb-3">
+              <input
+                type="checkbox"
+                name="completed"
+                className="form-check-input"
+                id="completed"
+                defaultChecked={todo?.completed || false}
+              />
+              <label className="form-check-label" htmlFor="completed">
+                Completed
+              </label>
+            </div>
+
+            {error && (
+              <div className="alert alert-danger">
+                {error}
+              </div>
+            )}
+
+            <div className="d-flex gap-2">
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+              >
+                {loading
+                  ? isEdit
+                    ? "Updating..."
+                    : "Adding..."
+                  : isEdit
+                  ? "Update Todo"
+                  : "Add Todo"}
+              </button>
+
+              <Link to="/" className="btn btn-outline-secondary">
+                Cancel
+              </Link>
+            </div>
+
+          </form>
         </div>
-
-        <div>
-          <label>Description</label>
-          <textarea
-            name="description"
-            defaultValue={todo?.description || ""}
-          />
-        </div>
-
-        <div>
-          <label>
-            <input
-              type="checkbox"
-              name="completed"
-              defaultChecked={todo?.completed || false}
-            />
-            Completed
-          </label>
-        </div>
-
-        {error && <p>{error}</p>}
-
-        <button type="submit" disabled={loading}>
-          {loading
-            ? isEdit
-              ? "Updating..."
-              : "Adding..."
-            : isEdit
-            ? "Update Todo"
-            : "Add Todo"}
-        </button>
-      </form>
+      </div>
     </div>
   );
 };

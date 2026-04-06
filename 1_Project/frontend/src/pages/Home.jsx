@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import NewTodo from "../components/NewTodo";
 import { Link } from "react-router";
 import { API } from "../api/api";
 
@@ -13,14 +11,10 @@ const Home = () => {
     try {
       setLoading(true);
       const response = await API.get("/todo/");
-      console.log(response.data);
       setData(response.data);
     } catch (error) {
-      console.log(error);
       setError(error);
     } finally {
-      // always executed
-      console.log("done");
       setLoading(false);
     }
   };
@@ -38,30 +32,62 @@ const Home = () => {
     fetchData();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (loading)
+    return (
+      <div className="container mt-5">
+        <div className="text-center">Loading...</div>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="container mt-5">
+        <div className="alert alert-danger">
+          Error: {error.message}
+        </div>
+      </div>
+    );
+
   return (
-    <div>
-      <h1>Home</h1>
-      {/* <NewTodo setData={setData}/> */}
-      <Link to={'/new'}>
-        Add new
-      </Link>
-      <ul>
+    <div className="container mt-5">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1 className="h3">Todos</h1>
+        <Link to="/new" className="btn btn-primary">
+          Add New
+        </Link>
+      </div>
+
+      <div className="list-group">
         {data.map((item) => (
-          <li key={item.id}>
-            <Link to={`/todo/${item.id}`}>
-            {item.title}
+          <div
+            key={item.id}
+            className="list-group-item d-flex justify-content-between align-items-center"
+          >
+            <Link
+              to={`/todo/${item.id}`}
+              className="text-decoration-none flex-grow-1"
+            >
+              {item.title}
             </Link>
-            <Link to={`/edit/${item.id}`} state={{ todo: item }}>
-              <button>Edit</button>
-            </Link>
-            <button
-            onClick={()=>{handleDelete(item.id)}}
-            >Delete</button>
-          </li>
+
+            <div className="btn-group">
+              <Link
+                to={`/edit/${item.id}`}
+                className="btn btn-sm btn-outline-secondary"
+              >
+                Edit
+              </Link>
+
+              <button
+                onClick={() => handleDelete(item.id)}
+                className="btn btn-sm btn-outline-danger"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };
