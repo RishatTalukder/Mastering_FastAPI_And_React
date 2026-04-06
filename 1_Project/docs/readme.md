@@ -3170,3 +3170,78 @@ const TodoForm = () => {
 export default TodoForm;
 
 ```
+
+Now, let's add the deleting a todo feature.
+
+FOr this first we have to add a delete endpoint in the backend.
+
+```python {.line-numbers}
+#backend/todo/router.py
+@router.delete(
+    "/{id}/delete",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a todo item",
+)
+async def delete_todo(id: int, db: Session = Depends(get_db)):
+    """
+    - **This endpoint will delete a todo item from the database.**
+    """
+    db.query(TodoModel).filter(TodoModel.id == id).delete()
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+```
+
+Here, the `status_code` is set to `status.HTTP_204_NO_CONTENT` which means that the response will be empty and the status code will be `204` which means no content.
+
+Now, let's add the delete button in the frontend.
+
+```jsx {.line-numbers}
+...
+
+const Home = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchData = async () => {
+    ...
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await API.delete(`/todo/${id}/delete`);
+      fetchData();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  ...
+  return (
+    <div>
+      ...
+      <ul>
+        {data.map((item) => (
+          <li key={item.id}>
+            ...
+            <Link to={`/edit/${item.id}`} state={{ todo: item }}>
+              <button>Edit</button>
+            </Link>
+            <button
+            onClick={()=>{handleDelete(item.id)}}
+            >Delete</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default Home;
+
+```
+
+That's it, now we have a todo app with all the features we need.
+
+We can add a new todo, edit a todo, delete a todo and view a todo.

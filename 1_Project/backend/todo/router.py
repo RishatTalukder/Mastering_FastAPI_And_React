@@ -90,3 +90,17 @@ async def get_todo(id: int, db: Session = Depends(get_db)):
         .filter(TodoModel.id == id)
         .first()
     )
+
+
+@router.delete(
+    "/{id}/delete",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a todo item",
+)
+async def delete_todo(id: int, db: Session = Depends(get_db)):
+    """
+    - **This endpoint will delete a todo item from the database.**
+    """
+    db.query(TodoModel).filter(TodoModel.id == id).delete()
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

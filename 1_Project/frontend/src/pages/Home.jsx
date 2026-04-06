@@ -25,6 +25,15 @@ const Home = () => {
     }
   };
 
+  const handleDelete = async (id) => {
+    try {
+      await API.delete(`/todo/${id}/delete`);
+      fetchData();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -47,6 +56,9 @@ const Home = () => {
             <Link to={`/edit/${item.id}`} state={{ todo: item }}>
               <button>Edit</button>
             </Link>
+            <button
+            onClick={()=>{handleDelete(item.id)}}
+            >Delete</button>
           </li>
         ))}
       </ul>
