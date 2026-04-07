@@ -5,11 +5,13 @@ from todo.schemas import Todo, Todo_Request, Todo_Title
 from database import get_db
 from sqlalchemy.orm import Session, load_only
 from todo.models import Todo as TodoModel
+from auth.oauth import oauth2_scheme
 
 router = APIRouter(
     prefix="/todo",
     tags=["todo"],
 )
+
 
 @router.get(
     "/",
@@ -22,12 +24,8 @@ async def root(db: Session = Depends(get_db)):
     """
 
     # return db.query(TodoModel).order_by(TodoModel.id.desc()).all()
-    #returning only ID and title for each todo item
-    return (
-        db.query(TodoModel)
-        .order_by(TodoModel.id.desc())
-        .all()
-    )
+    # returning only ID and title for each todo item
+    return db.query(TodoModel).order_by(TodoModel.id.desc()).all()
 
 
 class PredefinedEndpoints(str, Enum):
@@ -76,20 +74,19 @@ async def update_todo(
     db.refresh(todo_model)
     return todo_model
 
+
 @router.get(
     "/{id}",
     response_model=Todo,
     summary="Get todo by id",
 )
-async def get_todo(id: int, db: Session = Depends(get_db)):
+async def get_todo(
+    id: int, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
+):
     """
     - **This endpoint will return a todo by id.**
     """
-    return (
-        db.query(TodoModel)
-        .filter(TodoModel.id == id)
-        .first()
-    )
+    return db.query(TodoModel).filter(TodoModel.id == id).first()
 
 
 @router.delete(

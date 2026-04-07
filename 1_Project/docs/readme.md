@@ -3412,4 +3412,764 @@ async def create_user(request: User, db: Session = Depends(get_db)):
 
 Almost everything stays the same except the password. We are never directly storing the password in the database.
 
-Now, to varify
+One last thing is response model. It is set to users but it is also returns the password as a process.
+
+So, to do stop this we can use the `exclude` attribute. The problem is that we have to make a new schema for the response model. There should be way to use this schema as both response model and request model. There is a way.
+
+```python {.line-numbers}
+#backend/user/schemas.py
+from pydantic import BaseModel, ConfigDict, Field
+
+class User(BaseModel):
+    username: str
+    email: str
+    password: str = Field(exclude=True)
+
+    model_config = ConfigDict(from_attributes=True)
+
+```
+
+> We can use the Field method to exclude the password from the response model.
+
+Now, if you look at the docs in the request model you should see all the attributes but in the response model you should only see the username and email.
+
+Now, let's get into authentication.
+
+Fast api comes pre-built with `oauth2` authentication.'
+
+For this make a new file named `oauth.py` in the `auth` folder and add the following code,
+
+```python {.line-numbers}
+#backend/auth/oauth.py
+from fastapi.security import OAuth2PasswordBearer
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+```
+
+`OAuth2PasswordBearer` is a class that is used to authenticate users using the `Bearer` token and it provides a schema for the token.
+
+We can now use this as a dependency for any route to secure it.
+
+So, let's go to the `todo` folder and secute the get_todo endpoint.
+
+```python {.line-numbers}
+#backend/todos/router.py
+@router.get(
+    "/{id}",
+    response_model=Todo,
+    summary="Get todo by id",
+)
+async def get_todo(
+    id: int, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    - **This endpoint will return a todo by id.**
+    """
+    return db.query(TodoModel).filter(TodoModel.id == id).first()
+```
+
+Now, you should see this in the docs..
+
+![alt text](image-8.png)
+
+And in your secured endpoint there should be a lock icon.
+
+![alt text](image-9.png)
+
+> **Note:** The `token` is a string that is returned by the `oauth2_scheme` and it is used to authenticate the user.
+
+click on the authorize button.
+
+You should see this,
+
+![alt text](image-10.png)
+
+We have to fill these field to authorize themselves.
+
+Remember,
+
+`oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")`
+
+This line? 
+
+Here, we are specifying the token url. This is the url that will be used to get the token and access the authorization feilds we see in the docs.
+
+So, in the `oauth` file we have to write some boiler plate and we need another library called `jose` to generate the token.
+
+> This is called an access token. this will have authorization information encoded in it.
+
+```bash
+pip install jose
+```
+
+This library will generate JWT tokens for us.
+
+Now, go to the `auth/oauth.py` file and add the following code,
+
+```python {.line-numbers}
+#backend/oauth.py
+from fastapi.security import OAuth2PasswordBearer
+from datetime import timedelta, timezone, datetime
+from typing import Optional
+from jose import JWTError, jwt
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token")
+
+SECRET_KEY = "ffe9fdf49426ec409ef59500975cb8b718164a9d2b55e90c078b46279ee3d3ca"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+
+def create_access_token(
+    data: dict,
+    expires_delta: Optional[timedelta] = None,
+):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+```
+
+I know I know a lot of things going on here... 
+
+Nice — you're basically building **JWT authentication manually**, which is great for teaching. I'll explain it in the **teaching narration style** you want:
+"now we do this → code → why we do it" 🔐
+
+---
+
+- Step 1 — We need something to read token from request
+
+Now we need a way to **extract the token from incoming requests**, so we use FastAPI’s OAuth2 helper.
+
+```python
+from fastapi.security import OAuth2PasswordBearer
+```
+
+This import gives us a **dependency** that automatically:
+
+* reads `Authorization: Bearer <token>`
+* extracts the token
+* passes it to our protected routes
+
+So we don't manually parse headers.
+
+---
+
+Now we create the scheme:
+
+```python
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token")
+```
+
+What this does:
+
+* tells FastAPI **where users get tokens from**
+* `tokenUrl="api/token"` means:
+  → frontend sends username/password to `/api/token`
+  → backend returns JWT
+
+This is mainly for **Swagger UI** so it knows how authentication works.
+
+---
+
+- Step 2 — Now we define JWT settings
+
+Now we define some constants used when creating tokens.
+
+```python
+SECRET_KEY = "ffe9fdf49426ec409ef59500975cb8b718164a9d2b55e90c078b46279ee3d3ca"
+```
+
+This is the **secret used to sign the token**.
+
+Why?
+
+* JWT is just encoded text
+* Anyone can decode it
+* But only backend can **verify** signature using this key
+
+So this must stay secret.
+
+---
+
+Next:
+
+```python
+ALGORITHM = "HS256"
+```
+
+This defines **which hashing algorithm** we use to sign the token.
+
+`HS256` means:
+
+* HMAC
+* SHA256
+* symmetric secret key
+
+This is the most common JWT algorithm.
+
+---
+
+Next:
+
+```python
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+```
+
+This is how long the token should stay valid.
+
+Why?
+
+* tokens should not live forever
+* improves security
+* forces user to re-authenticate
+
+---
+
+- Step 3 — Now we create the function to generate token
+
+Now we define a function that actually **creates JWT tokens**.
+
+```python
+def create_access_token(
+    data: dict,
+    expires_delta: Optional[timedelta] = None,
+):
+```
+
+This function takes:
+
+* `data` → payload (like user id, email)
+* `expires_delta` → optional custom expiration time
+
+---
+
+- Step 4 — Copy data so we don't modify original
+
+Now we copy the data.
+
+```python
+to_encode = data.copy()
+```
+
+Why?
+
+* we don't want to modify original dictionary
+* we will add expiration to this copy
+
+---
+
+- Step 5 — Now we calculate expiration time
+
+Now we check if user passed custom expiry.
+
+```python
+if expires_delta:
+    expire = datetime.now(timezone.utc) + expires_delta
+```
+
+If expiry provided:
+
+* current time
+* * custom time
+* store in `expire`
+
+---
+
+Otherwise default expiry:
+
+```python
+else:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+```
+
+If no expiry given:
+
+* default to 15 minutes
+* prevents infinite tokens
+
+---
+
+- Step 6 — Add expiry to payload
+
+Now we attach expiry to token data.
+
+```python
+to_encode.update({"exp": expire})
+```
+
+JWT expects expiration in `exp` field.
+
+So payload becomes like:
+
+```json
+{
+  "sub": "user@example.com",
+  "exp": 1712142421
+}
+```
+
+---
+
+- Step 7 — Now we encode JWT
+
+Now we generate the actual token.
+
+```python
+encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+```
+
+This:
+
+* signs payload
+* encrypts signature
+* creates JWT string
+
+Example result:
+
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+---
+
+- Step 8 — return token
+
+Finally we return the token.
+
+```python
+return encoded_jwt
+```
+
+Now this token will be sent to frontend.
+
+---
+
+# Full Flow (Mental Model)
+
+1. User logs in
+2. We create payload `{sub: email}`
+3. Add expiry
+4. Sign with SECRET_KEY
+5. Return JWT
+6. Frontend stores token
+7. Sends token in Authorization header
+8. Backend verifies token
+
+---
+
+- Example usage
+
+When user logs in:
+
+```python
+access_token = create_access_token(
+    data={"sub": user.email},
+    expires_delta=timedelta(minutes=30)
+)
+```
+---
+
+> What "sub" means (important for viewers)
+
+You will normally store:
+
+```python
+data={"sub": user.email}
+```
+
+`sub` = subject (who owns token)
+
+Later you decode token and get user.
+
+
+Now, make a router for the `/api/token` endpoint in the `auth` folder.
+
+```python {.line-numbers}
+#backend/auth/router.py
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security.oauth2 import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+from database import get_db
+from user.models import User as UserModel
+from pwdlib import PasswordHash
+from .oauth import create_access_token
+
+password_hash = PasswordHash.recommended()
+
+router = APIRouter(tags=["auth"])
+
+
+@router.post("/token")
+def get_token(
+    request: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
+    user = db.query(UserModel).filter(UserModel.username == request.username).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Incorrect username")
+
+    if not password_hash.verify(request.password, user.password):
+        raise HTTPException(status_code=401, detail="Incorrect password")
+    
+    access_token = create_access_token(data={"sub": user.username})
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user_id": user.id,
+        "username": user.username
+    }
+```
+
+Again a lot of things going on here.
+
+Perfect — this is basically your **login endpoint**.
+I'll explain it in the **same narration style** you asked for. 🔐
+
+---
+
+# Step 1 — First we import required tools
+
+Now we need router, dependency injection, database session, and auth helpers.
+
+```python
+from fastapi import APIRouter, Depends, HTTPException
+```
+
+We import:
+
+* `APIRouter` → to create auth routes
+* `Depends` → for dependency injection
+* `HTTPException` → to return proper error responses
+
+---
+
+Now we import OAuth2 form handler.
+
+```python
+from fastapi.security.oauth2 import OAuth2PasswordRequestForm
+```
+
+This class:
+
+* reads form data
+* expects `username` and `password`
+* automatically parses request body
+
+This is the **standard OAuth2 login format**.
+
+---
+
+Now we import SQLAlchemy session.
+
+```python
+from sqlalchemy.orm import Session
+```
+
+We need this to talk to the database.
+
+---
+
+Now we import our database dependency.
+
+```python
+from database import get_db
+```
+
+This function:
+
+* creates DB session
+* yields it
+* closes it after request
+
+---
+
+Now we import our User model.
+
+```python
+from user.models import User as UserModel
+```
+
+We alias it to avoid naming conflicts later.
+
+---
+
+Now we import password hashing.
+
+```python
+from pwdlib import PasswordHash
+```
+
+This is used to verify passwords securely.
+
+---
+
+Now we import token creator.
+
+```python
+from .oauth import create_access_token
+```
+
+This is the function we built earlier.
+
+---
+
+# Step 2 — Now we initialize password hashing
+
+Now we create hashing object.
+
+```python
+password_hash = PasswordHash.recommended()
+```
+
+This:
+
+* selects best hashing algorithm (argon2)
+* prepares hashing + verification methods
+
+We will use this to compare passwords.
+
+---
+
+# Step 3 — Create router
+
+Now we define router for auth endpoints.
+
+```python
+router = APIRouter(tags=["auth"])
+```
+
+`tags=["auth"]` groups endpoints in Swagger UI under "auth".
+
+Cleaner documentation.
+
+---
+
+# Step 4 — Create login endpoint
+
+Now we define login route.
+
+```python
+@router.post("/token")
+```
+
+This means:
+
+* POST request
+* endpoint: `/token`
+* user sends credentials here
+
+This is the **OAuth2 standard token endpoint**.
+
+---
+
+# Step 5 — Now define function
+
+```python
+def get_token(
+```
+
+This function will:
+
+* authenticate user
+* generate token
+* return token
+
+---
+
+# Step 6 — Request dependency
+
+```python
+request: OAuth2PasswordRequestForm = Depends(),
+```
+
+Now we inject form data.
+
+### Why `Depends()` is empty?
+
+Because:
+
+* `OAuth2PasswordRequestForm` **already knows how to read request**
+* FastAPI automatically creates it
+* no extra config needed
+
+So:
+
+* FastAPI reads form body
+* extracts `username`
+* extracts `password`
+* gives it to `request`
+
+So we can do:
+
+```python
+request.username
+request.password
+```
+
+No manual parsing needed.
+
+---
+
+# Step 7 — Database dependency
+
+```python
+db: Session = Depends(get_db),
+```
+
+Now we inject database session.
+
+This:
+
+* calls `get_db()`
+* creates session
+* passes it to function
+* closes session after request
+
+---
+
+# Step 8 — Query user
+
+Now we search user in database.
+
+```python
+user = db.query(UserModel).filter(UserModel.username == request.username).first()
+```
+
+This:
+
+* queries User table
+* filters by username
+* returns first match
+
+So we find the user trying to login.
+
+---
+
+# Step 9 — Check if user exists
+
+```python
+if not user:
+    raise HTTPException(status_code=401, detail="Incorrect username")
+```
+
+If no user found:
+
+* raise error
+* return response
+
+User gets:
+
+```json
+{
+  "detail": "Incorrect username"
+}
+```
+
+---
+
+# Step 10 — Verify password
+
+```python
+if not password_hash.verify(request.password, user.password):
+```
+
+This:
+
+* compares plain password
+* with hashed password
+* returns True if match
+
+This is secure comparison.
+
+---
+
+If password wrong:
+
+```python
+raise HTTPException(status_code=401, detail="Incorrect password")
+```
+
+Return error.
+
+---
+
+# Step 11 — Create access token
+
+Now user is authenticated, so we generate token.
+
+```python
+access_token = create_access_token(data={"sub": user.username})
+```
+
+We store:
+
+* `sub` → username
+* inside JWT payload
+
+Later we decode token and identify user.
+
+---
+
+# Step 12 — Return response
+
+Now we return token and user info.
+
+```python
+return {
+    "access_token": access_token,
+    "token_type": "bearer",
+    "user_id": user.id,
+    "username": user.username
+}
+```
+
+This sends:
+
+* `access_token` → JWT
+* `token_type` → always "bearer"
+* `user_id` → optional frontend usage
+* `username` → optional frontend usage
+
+---
+
+# Why `token_type = bearer`
+
+Frontend sends header:
+
+```
+Authorization: Bearer <token>
+```
+
+So we specify type.
+
+---
+
+# Full Flow
+
+1. User sends username/password
+2. FastAPI parses form
+3. DB finds user
+4. Verify password
+5. Create JWT
+6. Return token
+7. Frontend stores token
+8. Future requests use token
+
+Now, we can add this router to the `main.py` file,
+
+```python {.line-numbers}
+#backend/main.py
+from auth.router import router as auth_router
+
+app.include_router(auth_router)
+```
