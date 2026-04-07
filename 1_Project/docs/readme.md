@@ -3266,3 +3266,150 @@ createRoot(document.getElementById('root')).render(
 )
 
 ```
+
+With that out of the let's make a authentication system.
+
+# Authentication
+
+Let's make a new folder inside `backend` named `user`. This is for authentication.
+
+Now, now we need to do two things. One is to create a user and another is to login a user.
+
+So, to create a user we need a route and some information should be fetched from the user. We can make a schema for that.
+
+```python {.line-numbers}
+#backend/user/schemas.py
+from pydantic import BaseModel
+
+class User(BaseModel):
+    username: str
+    email: str
+    password: str
+
+```
+
+Now, we can use schema for the create user route.
+
+SO, But first a database table should be created.
+
+```python {.line-numbers}
+#backend/user/models.py
+from database import Base
+from sqlalchemy import Column, Integer, String
+
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    email = Column(String, unique=False, index=False)
+    password = Column(String)
+
+```
+
+> **Note:** The `unique` attribute is set to `True` which means that the column should be unique. The `index` attribute is set to `True` which means that the column should be indexed.
+
+Now, we have to connect it to the main file.
+
+```python {.line-numbers}
+#backend/main.py
+...
+from todo import models
+from user import models
+
+app = FastAPI()
+
+app.add_middleware(
+    ...
+)
+
+app.include_router(router, prefix="/api")
+
+@app.get("/")
+async def root():
+    return {"message": "Welcome"}
+
+Base.metadata.create_all(bind=engine)
+```
+> This will automatically now create the table in the database.
+
+and we can now make a new user.
+
+```python {.line-numbers}
+#backend/user/router.py
+from fastapi import APIRouter, Depends
+from .schemas import User
+from .models import User as UserModel
+from sqlalchemy.orm import Session
+from database import get_db
+
+router = APIRouter(
+    prefix="/user",
+    tags=["user"],
+)
+
+@router.post("/new_user", response_model=User)
+async def create_user(request: User, db: Session = Depends(get_db)):
+    new_user = UserModel(
+        username=request.username,
+        email=request.email,
+        password=request.password,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+```
+
+Here, the `response_model` is set to `User` which means that the response will be the `User` schema.
+
+And we are making a new user with unique username and email.
+
+But here's the problem, we dirctly storing the password in the database is not a good idea. What if the your database gets leaked?
+
+So, a nifty technique is to hash the password.
+
+For that we need to use `pwdlib`.
+
+```bash
+pip install 'pwdlib[argon2]'
+```
+
+> This is modern password hashing library that provides a fast and secure way to hash passwords using the Argon2 algorithm.
+
+Now, we can hash the password and store it in the database.
+
+```python {.line-numbers}
+#backend/user/router.py
+from fastapi import APIRouter, Depends
+from .schemas import User
+from .models import User as UserModel
+from sqlalchemy.orm import Session
+from database import get_db
+# import the password hashing library
+from pwdlib import PasswordHash
+
+# create a password hasher
+password_hash = PasswordHash.recommended()
+
+...
+
+@router.post("/new_user", response_model=User)
+async def create_user(request: User, db: Session = Depends(get_db)):
+    new_user = UserModel(
+        username=request.username,
+        email=request.email,
+        # hash the password
+        password=password_hash.hash(request.password),
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+```
+
+Almost everything stays the same except the password. We are never directly storing the password in the database.
+
+Now, to varify
