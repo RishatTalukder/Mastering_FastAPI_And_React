@@ -4170,13 +4170,13 @@ def get_current_user(
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
-    
+
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
         )
-    
+
     user = db.query(UserModel).filter(UserModel.username == username).first()
     if not user:
         raise HTTPException(
@@ -4215,9 +4215,9 @@ token: str = Depends(oauth2_schema)
 
 This tells FastAPI:
 
-* read the `Authorization` header
-* extract the `Bearer` token
-* pass it as `token` variable
+- read the `Authorization` header
+- extract the `Bearer` token
+- pass it as `token` variable
 
 So we don't manually read headers.
 
@@ -4229,8 +4229,8 @@ db: Session = Depends(get_db)
 
 So now inside this function we have:
 
-* the JWT token
-* database access
+- the JWT token
+- database access
 
 Now that we have the token, we need to decode it.
 
@@ -4242,8 +4242,8 @@ try:
 
 Here we decode the JWT using:
 
-* `SECRET_KEY` to verify signature
-* `ALGORITHM` to verify hashing method
+- `SECRET_KEY` to verify signature
+- `ALGORITHM` to verify hashing method
 
 If the token is valid, we get the payload.
 
@@ -4273,10 +4273,10 @@ except JWTError:
 
 This happens when:
 
-* token is expired
-* token is invalid
-* signature mismatch
-* token tampered
+- token is expired
+- token is invalid
+- signature mismatch
+- token tampered
 
 So we return `401 Unauthorized`.
 
@@ -4300,9 +4300,9 @@ if not user:
 
 This handles edge cases:
 
-* user deleted
-* token still valid but user removed
-* database inconsistency
+- user deleted
+- token still valid but user removed
+- database inconsistency
 
 Finally we return the user.
 
@@ -4312,10 +4312,10 @@ return user
 
 So this function:
 
-* reads token
-* decodes token
-* finds user
-* returns user
+- reads token
+- decodes token
+- finds user
+- returns user
 
 Now we create the `/me` endpoint.
 
@@ -4333,9 +4333,9 @@ response_model=User
 
 This means:
 
-* response will be serialized using `User` schema
-* sensitive fields like password won't be returned
-* FastAPI auto validates response
+- response will be serialized using `User` schema
+- sensitive fields like password won't be returned
+- FastAPI auto validates response
 
 Now the route function:
 
@@ -4374,10 +4374,10 @@ So the full flow is:
 
 This endpoint is useful because:
 
-* frontend can get logged in user
-* no need to store user info locally
-* always stays in sync
-* secure and standard
+- frontend can get logged in user
+- no need to store user info locally
+- always stays in sync
+- secure and standard
 
 Also since `get_current_user` is reusable, we can protect other routes like:
 
@@ -4390,7 +4390,6 @@ Now only logged in users can access it.
 
 So `/me` is just the first use case — but the dependency is reusable across the whole application.
 
-
 Okay now let's so the frontend side.
 
 First we need a signup page and a login page.
@@ -4402,7 +4401,6 @@ Make 2 new files in the `frontend/src/pages` folder:
 import React, { useState } from "react";
 
 const Signup = () => {
-
   const [form, setForm] = useState({
     username: "",
     password: "",
@@ -4563,9 +4561,9 @@ import { createContext, useState, useEffect } from "react";
 
 We use:
 
-* `createContext` → to create global auth state
-* `useState` → to store user
-* `useEffect` → to check login on app load
+- `createContext` → to create global auth state
+- `useState` → to store user
+- `useEffect` → to check login on app load
 
 ---
 
@@ -4592,7 +4590,7 @@ This creates a **global container** where auth data will live.
 Later components can access it using:
 
 ```javascript
-useContext(AuthContext)
+useContext(AuthContext);
 ```
 
 ---
@@ -4607,9 +4605,9 @@ const AuthProvider = ({ children }) => {
 
 This component will:
 
-* hold auth state
-* provide auth functions
-* wrap the entire app
+- hold auth state
+- provide auth functions
+- wrap the entire app
 
 `children` = everything inside `<AuthProvider>`.
 
@@ -4625,8 +4623,8 @@ const [user, setUser] = useState(null);
 
 Initially:
 
-* `null` → user not logged in
-* later → user object from `/me`
+- `null` → user not logged in
+- later → user object from `/me`
 
 ---
 
@@ -4684,9 +4682,9 @@ localStorage.setItem("token", access_token);
 
 We store in localStorage so:
 
-* persists after refresh
-* used by Axios interceptor
-* sent in Authorization header
+- persists after refresh
+- used by Axios interceptor
+- sent in Authorization header
 
 ---
 
@@ -4718,9 +4716,9 @@ const register = async (credentials) => {
 
 This:
 
-* creates new user
-* does NOT log them in automatically
-* user must login after register
+- creates new user
+- does NOT log them in automatically
+- user must login after register
 
 ---
 
@@ -4740,8 +4738,8 @@ const response = await API.get("/user/me/");
 
 If token is valid:
 
-* backend returns user
-* we store it
+- backend returns user
+- we store it
 
 ```javascript
 setUser(response.data);
@@ -4760,9 +4758,9 @@ catch (error) {
 
 This happens when:
 
-* no token
-* token expired
-* invalid token
+- no token
+- token expired
+- invalid token
 
 So we reset user.
 
@@ -4781,9 +4779,9 @@ const logout = () => {
 
 This:
 
-* removes token
-* resets user
-* user becomes logged out
+- removes token
+- resets user
+- user becomes logged out
 
 ---
 
@@ -4799,10 +4797,10 @@ useEffect(() => {
 
 This:
 
-* runs once
-* checks if token exists
-* fetches user
-* keeps user logged in after refresh
+- runs once
+- checks if token exists
+- fetches user
+- keeps user logged in after refresh
 
 So page refresh does NOT log user out.
 
@@ -4818,10 +4816,10 @@ Now we pass everything to context.
 
 We expose:
 
-* `user`
-* `login`
-* `register`
-* `logout`
+- `user`
+- `login`
+- `register`
+- `logout`
 
 So any component can access them.
 
@@ -4830,7 +4828,9 @@ So any component can access them.
 - Step 11 — Render children
 
 ```javascript
-{children}
+{
+  children;
+}
 ```
 
 This renders the rest of the app.
@@ -4841,11 +4841,11 @@ This renders the rest of the app.
 
 AuthProvider does:
 
-* store user globally
-* login user
-* register user
-* logout user
-* auto login on refresh
+- store user globally
+- login user
+- register user
+- logout user
+- auto login on refresh
 
 ---
 
@@ -4859,12 +4859,11 @@ const { user, logout } = useContext(AuthContext);
 
 Now you can:
 
-* show username
-* logout button
-* protect routes
+- show username
+- logout button
+- protect routes
 
 ---
-
 
 now we can simply use these functions to login and signup.
 
@@ -4885,7 +4884,7 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await signup(form); 
+    await signup(form);
     console.log(form);
   };
   return (
@@ -4904,10 +4903,10 @@ same goes for the login page.
 //frontend/src/pages/login.jsx
 import React, { useContext } from "react";
 import { useState } from "react";
-import {AuthContext} from '../context/AuthProvider'
+import { AuthContext } from "../context/AuthProvider";
 
 const Login = () => {
-  const {login}=useContext(AuthContext)
+  const { login } = useContext(AuthContext);
   const [form, setForm] = useState({
     username: "",
     password: "",
@@ -4949,15 +4948,12 @@ So, we have fix the login function to send a `x-www-form-urlencoded` body.
 ```jsx {.line-numbers}
 //frontend/src/context/AuthProvider.jsx
 const login = async (credentials) => {
-    const response = await API.post(
-      "/token/",
-      new URLSearchParams(credentials),
-    );
-    const { access_token } = response.data;
-    localStorage.setItem("token", access_token);
+  const response = await API.post("/token/", new URLSearchParams(credentials));
+  const { access_token } = response.data;
+  localStorage.setItem("token", access_token);
 
-    await getUser();
-  };
+  await getUser();
+};
 ```
 
 > URLsearchParams class will transform an object into a query string.
@@ -4973,19 +4969,19 @@ Now, it is usable for 30minutes and we can just send it as a default header with
 import axios from "axios";
 
 export const API = axios.create({
-    baseURL: "http://localhost:8000/api/",
+  baseURL: "http://localhost:8000/api/",
 });
 
-API.interceptors.request.use((req)=>{
-    const token = localStorage.getItem('token')
-    if(token){
-        req.headers.Authorization = `Bearer ${token}`
-    }
-    return req
-})
+API.interceptors.request.use((req) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    req.headers.Authorization = `Bearer ${token}`;
+  }
+  return req;
+});
 
 export default API;
-``` 
+```
 
 Here interceptors are used to add default headers to the request.
 
@@ -4997,4 +4993,220 @@ We actually make a get user function that will activate when the user is logged 
 
 if you take a look in the react dev tools you should see the user state success fully updating. Adn now we can send a authorized request to every endpoint that needs authorization.
 
-So, now we can finish the project by adding user todo fetching in every single endpoint and then we can update the frontend. 
+So, now we can finish the project by adding user todo fetching in every single endpoint and then we can update the frontend.
+
+First connecting the `user and todo` models.
+
+```python {.line-numbers}
+#backend/todo/models.py
+from database import Base
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
+
+
+class Todo(Base):
+    __tablename__ = "todo"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String)
+    description = Column(String)
+    completed = Column(Boolean)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    user = relationship("User", back_populates="todos")
+
+```
+
+> `user_id` is a foreign key that references the `id` column in the `users` table.
+
+> `user` is a relationship that is used to access the user that owns the todo.
+
+```python {.line-numbers}
+#backend/user/models.py
+from database import Base
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    email = Column(String, unique=False, index=False)
+    password = Column(String)
+
+    todos = relationship("Todo", back_populates="user", cascade="all, delete")
+```
+
+> We should add relationships to the `user` and `todo` models.
+
+> back_populates is used to define the relationship in the other model.
+
+> cascade is used to delete the todo when the user is deleted.
+
+> These changes will not be reflected in the database directly because database makes
+
+Now, as we have a relationship between the user and todo we can fetch the todos of a specific users. So, let's start updating the endpoints so that now different users can have different todos.
+
+Let's go one by one. First getting all user Todo.
+
+```python {.line-numbers}
+#backend/todo/routers.py
+...
+from user.router import get_current_user
+from user.models import User as UserModel
+
+router = APIRouter(
+    prefix="/todo",
+    tags=["todo"],
+)
+
+@router.get(
+    "/",
+    response_model=list[Todo_Title],
+    summary="Get all todo items",
+)
+async def root(
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    - **This endpoint will return a list of all todo items in the database.**
+    """
+    return (
+        db.query(TodoModel)
+        .filter(TodoModel.user_id == current_user.id)
+        .order_by(TodoModel.id.desc())
+        .all()
+    )
+```
+
+> `current_user` is a dependency that is injected by the `get_current_user` function.
+> I'm filtering the todos by the current user id and ordering them by id in descending order.
+
+Now, update the create todo endpoint.
+
+```python {.line-numbers}
+@router.post("/new_todo", response_model=Todo)
+async def create_todo(
+    request: Todo_Request,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    new_todo = TodoModel(
+        title=request.title,
+        description=request.description,
+        completed=request.completed,
+        user_id=current_user.id
+    )
+    db.add(new_todo)
+    db.commit()
+    db.refresh(new_todo)
+    return new_todo
+```
+
+Getting the user and making a new todo object with the current user id. That's it.
+
+```python {.line-numbers}
+from fastapi import HTTPException
+...
+
+@router.get(
+    "/{id}",
+    response_model=Todo,
+    summary="Get todo by id",
+)
+async def get_todo(
+    id: int, db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    - **This endpoint will return a todo by id.**
+    """
+    todo = (
+        db.query(TodoModel)
+        .filter(
+            TodoModel.id == id,
+            TodoModel.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    return todo
+```
+
+> As we are getting a single todo we have to check two things:
+  - If the todo exists
+  - If the todo belongs to the current user
+
+So, we are filtering the todo by id and current user id and if a todo is not found, we raise a `HTTPException` with status code `404` and detail `Todo not found` else, we return the todo.
+
+Almost same can be done for the update and delete todo endpoints.
+
+```python {.line-numbers}
+@router.put(
+    "/{item_id}/update",
+    response_model=Todo,
+    summary="Update a todo item",
+)
+async def update_todo(
+    item_id: int,
+    todo: Todo_Request,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    - **This endpoint will update a todo item in the database.**
+    """
+
+    todo_model = db.query(TodoModel).filter(TodoModel.id == item_id, TodoModel.user_id == current_user.id).first()
+
+    if not todo_model:
+        raise HTTPException(status_code=404, detail="Todo not found")
+    todo_model.title = todo.title
+    todo_model.description = todo.description
+    todo_model.completed = todo.completed
+    db.commit()
+    db.refresh(todo_model)
+    return todo_model
+```
+
+> We are filtering the todo by id and current user id and if a todo is not found, we raise a `HTTPException` with status code `404` and detail `Todo not found` else, we update the todo.
+
+All the other logic stays the same.
+
+Finally delete the todo.
+
+```python {.line-numbers}
+@router.delete(
+    "/{id}/delete",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a todo item",
+)
+async def delete_todo(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """
+    - **This endpoint will delete a todo item from the database.**
+    """
+    deleted = (
+        db.query(TodoModel)
+        .filter(
+            TodoModel.id == id,
+            TodoModel.user_id == current_user.id,
+        )
+        .delete()
+    )
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+```
+
+> same logic as above.
+> The delete method returns the number of rows deleted. im using that to check if the todo is deleted or not. If it's not deleted, we raise a `HTTPException` with status code `404` and detail `Todo not found`.
