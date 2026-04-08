@@ -1336,30 +1336,29 @@ Before we start using FastAPI with SQLAlchemy, we need to understand what a data
 This is not a DBA-level explanation.
 This is a **developer-focused foundation** just enough theory to make everything else make sense.
 
-
 # What Is a Database?
 
 At its core, a database is a structured way to store data so that it can be:
 
-* Saved permanently
-* Retrieved efficiently
-* Updated safely
-* Organized logically
+- Saved permanently
+- Retrieved efficiently
+- Updated safely
+- Organized logically
 
 Imagine you are building a Todo app.
 
 You could store your todos inside:
 
-* A Python list
-* A JSON file
-* A text file
+- A Python list
+- A JSON file
+- A text file
 
 But what happens when:
 
-* The server restarts?
-* Multiple users use the app?
-* You need to search thousands of records?
-* You need relationships between data?
+- The server restarts?
+- Multiple users use the app?
+- You need to search thousands of records?
+- You need relationships between data?
 
 That’s where databases come in.
 
@@ -1373,10 +1372,10 @@ They store data in **tables**.
 
 You can think of a table like an Excel sheet.
 
-| id | title     | completed |
-| -- | --------- | --------- |
-| 1  | Learn API | false     |
-| 2  | Sleep     | true      |
+| id  | title     | completed |
+| --- | --------- | --------- |
+| 1   | Learn API | false     |
+| 2   | Sleep     | true      |
 
 ### Table
 
@@ -1384,9 +1383,9 @@ A table is a collection of related data.
 
 Example:
 
-* `users`
-* `todos`
-* `posts`
+- `users`
+- `todos`
+- `posts`
 
 Each table represents one type of entity.
 
@@ -1412,9 +1411,9 @@ For a `users` table:
 
 | id | name | email |
 
-* `id` is a column
-* `name` is a column
-* `email` is a column
+- `id` is a column
+- `name` is a column
+- `email` is a column
 
 Each column defines what type of data is stored.
 
@@ -1428,17 +1427,17 @@ A primary key is a column that uniquely identifies each row in a table.
 
 Example:
 
-| id | title |
-| -- | ----- |
-| 1  | Learn |
-| 2  | Sleep |
+| id  | title |
+| --- | ----- |
+| 1   | Learn |
+| 2   | Sleep |
 
 Here, `id` is the primary key.
 
 It has two important rules:
 
-* It must be unique
-* It cannot be null
+- It must be unique
+- It cannot be null
 
 Without a primary key, we wouldn’t know which specific row to update or delete.
 
@@ -1465,16 +1464,16 @@ Constraints protect data integrity.
 
 Common ones:
 
-* **NOT NULL** → Value cannot be empty
-* **UNIQUE** → No duplicates allowed
-* **DEFAULT** → Assign default value if none given
+- **NOT NULL** → Value cannot be empty
+- **UNIQUE** → No duplicates allowed
+- **DEFAULT** → Assign default value if none given
 
 Example:
 
 An email column might be:
 
-* NOT NULL
-* UNIQUE
+- NOT NULL
+- UNIQUE
 
 This prevents duplicate accounts.
 
@@ -1492,10 +1491,10 @@ In real applications, you rarely have just one table.
 
 Imagine a real system:
 
-* Users
-* Todos
-* Comments
-* Posts
+- Users
+- Todos
+- Comments
+- Posts
 
 Storing everything in one table would be chaotic and inefficient.
 
@@ -1505,15 +1504,15 @@ Example:
 
 ### Users Table
 
-| id | name  |
-| -- | ----- |
-| 1  | Alice |
+| id  | name  |
+| --- | ----- |
+| 1   | Alice |
 
 ### Todos Table
 
-| id | title | user_id |
-| -- | ----- | ------- |
-| 1  | Learn | 1       |
+| id  | title | user_id |
+| --- | ----- | ------- |
+| 1   | Learn | 1       |
 
 Now we introduce a new concept.
 
@@ -1537,9 +1536,9 @@ You cannot reference a user that does not exist.
 
 If a user is deleted, the database can:
 
-* Prevent deletion
-* Delete related todos
-* Set the value to NULL
+- Prevent deletion
+- Delete related todos
+- Set the value to NULL
 
 This prevents broken relationships.
 
@@ -1595,8 +1594,8 @@ Example:
 
 Posts ↔ Tags
 
-* One post can have many tags
-* One tag can belong to many posts
+- One post can have many tags
+- One tag can belong to many posts
 
 This cannot be solved with a single foreign key.
 
@@ -1675,11 +1674,11 @@ Imagine building a large application.
 
 Without ORM, you would need to:
 
-* Write raw SQL for every query
-* Manually map query results to Python objects
-* Handle relationships manually
-* Worry about SQL injection risks
-* Manage database-specific syntax differences
+- Write raw SQL for every query
+- Manually map query results to Python objects
+- Handle relationships manually
+- Worry about SQL injection risks
+- Manage database-specific syntax differences
 
 This becomes repetitive, error-prone, and difficult to maintain.
 
@@ -1699,7 +1698,7 @@ You think:
 
 Instead of thinking:
 
-> “Select * from todos where user_id = 1”
+> “Select \* from todos where user_id = 1”
 
 You think:
 
@@ -1707,14 +1706,14 @@ You think:
 
 It changes your mental model from query-based to object-based.
 
-* Cleaner
-* Easier to understand
-* Easier to maintain
-* More scalable
+- Cleaner
+- Easier to understand
+- Easier to maintain
+- More scalable
 
 Another nice thing about ORMs are they can be used with almost any database.
 
-Most of the time different databases can have SQL syntax differences. Although, these differences are usually minor. They can cause you application to fail if you are migrating from one database to another. 
+Most of the time different databases can have SQL syntax differences. Although, these differences are usually minor. They can cause you application to fail if you are migrating from one database to another.
 
 ORMs abstract away these differences. If a OMR has support for a database, it can be used with that database anytime and most of the time ORMs have support for multiple databases.
 
@@ -1726,9 +1725,9 @@ ORM is powerful, but it is not magic.
 
 Important to understand:
 
-* ORM still generates SQL
-* SQL still runs underneath
-* Poor database design still causes problems
+- ORM still generates SQL
+- SQL still runs underneath
+- Poor database design still causes problems
 
 ORM does not replace database knowledge.
 
@@ -1748,9 +1747,9 @@ ORM is industry standard.
 
 In rare cases:
 
-* Extremely complex reporting queries
-* Very high-performance data systems
-* Heavy analytics pipelines
+- Extremely complex reporting queries
+- Very high-performance data systems
+- Heavy analytics pipelines
 
 Developers may use raw SQL for fine-tuned control.
 
@@ -1758,10 +1757,10 @@ But for most web applications, ORM is the correct choice.
 
 It allows developers to:
 
-* Think in objects
-* Design clean systems
-* Manage relationships naturally
-* Scale applications confidently
+- Think in objects
+- Design clean systems
+- Manage relationships naturally
+- Scale applications confidently
 
 Understanding ORM is a major step in becoming a real backend developer.
 
@@ -1773,7 +1772,6 @@ Understanding ORM is a major step in becoming a real backend developer.
 | Row              | Object            |
 | Column           | Attribute         |
 
-
 # Setting up a Database
 
 So, let's setup a database.
@@ -1784,14 +1782,14 @@ So, we have freedom to choose any `ORM` that we want.
 
 For the time being, we have some choices:
 
-- `SqlModel`. 
+- `SqlModel`.
 - `SQLAlchemy`.
 - `PeeWee`.
 - `TortoiseORM`.(One day this will become one of the best, if not the best)
 
 `SqlModel` is made by the creator of fastapi and internally made with `SqlAlchemy` and `pydantic`. It's also documented in the `fastapi` documentations.
 
-Although easy to use a lot of deep ORM concepts are abstracted away. 
+Although easy to use a lot of deep ORM concepts are abstracted away.
 
 So, I'll use `SqlAlchemy` for this project. The industry standard and maybe the most popular python ORM.
 
@@ -1991,12 +1989,12 @@ from todo.schemas import Todo, Todo_Request
 from database import get_db # import the function to get the session
 from sqlalchemy.orm import Session # import the session to reference
 from todo.models import Todo as TodoModel # import the Todo model as TodoModel to avoid conflicts
- 
+
 ...
-    
+
 
 @router.post(
-        "/new_todo", 
+        "/new_todo",
         response_model=Todo
 )
 async def create_todo(request: Todo_Request, db: Session = Depends(get_db)):
@@ -2086,7 +2084,7 @@ We already have a `endpoint` to get all the data from the database.
 ```python {.line-numbers}
 #backend/todo/router.py
 
-... 
+...
 
 @router.get(
     "/",
@@ -2117,17 +2115,13 @@ Go to the src folder and make a new folder named `components`. Inside that make 
 Now, open the `NewTodo.jsx` file and write the following code,
 
 ```jsx {.line-numbers}
-import React from 'react'
+import React from "react";
 
 const NewTodo = () => {
-  return (
-    <div>
-      New Todo
-    </div>
-  )
-}
+  return <div>New Todo</div>;
+};
 
-export default NewTodo
+export default NewTodo;
 ```
 
 Then import it in the `Home.jsx` file.
@@ -2138,9 +2132,9 @@ import axios from "axios";
 import NewTodo from "../components/NewTodo";
 
 const Home = () => {
-    
 
-    ... 
+
+    ...
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
@@ -2189,13 +2183,13 @@ const NewTodo = ({ setData }) => {
       const newTodo = response.data;
       console.log(title);
       setData((prev) => {
-        return [newTodo,...prev];
+        return [newTodo, ...prev];
       });
 
       formElement.reset();
     } catch (error) {
       console.log(error);
-    } 
+    }
   };
   return (
     <div>
@@ -2216,11 +2210,11 @@ First we have to make form.
 
 ```jsx {.line-numbers}
 <div>
-      <form onSubmit={handleAddTodo}>
-        <input type="text" placeholder="new todo" name="title" />
-        <button type="submit">Add</button>
-      </form>
-    </div>
+  <form onSubmit={handleAddTodo}>
+    <input type="text" placeholder="new todo" name="title" />
+    <button type="submit">Add</button>
+  </form>
+</div>
 ```
 
 Then we have to send the form data to the backend but to do that we need to get the data from the form.
@@ -2232,7 +2226,7 @@ const handleAddTodo = async (e) => {
     const formElement = e.currentTarget;
     const form = new FormData(formElement);
     const title = form.get("title");
-    
+
 
     ...
 ```
@@ -2265,7 +2259,7 @@ const handleAddTodo = async (e) => {
 
     const formElement = e.currentTarget;
     const form = new FormData(formElement);
-    const title = form.get("title");  
+    const title = form.get("title");
 
     try {
       const response = await axios.post(
@@ -2301,7 +2295,6 @@ After all that we reset the form.
 And we are done.
 
 Also, when the user fetches the data I configured the endpoint as such that the data will be return in descending order of the `ID` of the todo.
-
 
 ```python {.line-numbers}
 #backend/todo/router.py
@@ -2384,18 +2377,18 @@ Now we have to wrap our app in a router.
 
 ```jsx {.line-numbers}
 //src/main.jsx
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
-import { BrowserRouter as Router } from 'react-router' //BrowserRouter is used to wrap the app in a router
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.jsx";
+import { BrowserRouter as Router } from "react-router"; //BrowserRouter is used to wrap the app in a router
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Router>
       <App />
     </Router>
   </StrictMode>,
-)
+);
 ```
 
 Now we can define the routes in the `app.jsx` like below.
@@ -2422,17 +2415,13 @@ So, let's make a new file named `pages/TodoForm.jsx`.
 
 ```jsx {.line-numbers}
 //src/pages/TodoForm.jsx
-import React from 'react'
+import React from "react";
 
 const TodoForm = () => {
-  return (
-    <div>
-      Noice
-    </div>
-  )
-}
+  return <div>Noice</div>;
+};
 
-export default TodoForm
+export default TodoForm;
 ```
 
 Now, we have to make a new route for this page.
@@ -2462,16 +2451,14 @@ Let's fix the `home` page and add a button to make a new todo. When clicked it'l
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import NewTodo from "../components/NewTodo";
-import { Link } from "react-router"; 
+import { Link } from "react-router";
 
 const Home = () => {
   return (
     <div>
       <h1>Home</h1>
       {/* <NewTodo setData={setData}/> */}
-      <Link to={'/new'}> 
-        Add new
-      </Link>
+      <Link to={"/new"}>Add new</Link>
       <ul>
         {data.map((item) => (
           <li key={item.id}>{item.title}</li>
@@ -2591,7 +2578,7 @@ import NewTodo from "../components/NewTodo";
 import { Link } from "react-router";
 
 const Home = () => {
-  
+
   ...
 
   return (
@@ -2607,7 +2594,7 @@ const Home = () => {
             {item.title}
 
             {/* add a button to update the todo */}
-            <Link to={`/edit/${item.id}`} state={{ todo: item }}> 
+            <Link to={`/edit/${item.id}`} state={{ todo: item }}>
               <button>Edit</button>
             </Link>
           </li>
@@ -2690,7 +2677,7 @@ const TodoForm = () => {
       }
       navigate("/");
     } catch (err) {
-      setError(`Failed to ${isEdit ? 'update' : 'create'} todo`);
+      setError(`Failed to ${isEdit ? "update" : "create"} todo`);
       console.error(err);
     } finally {
       setLoading(false);
@@ -2699,7 +2686,7 @@ const TodoForm = () => {
 
   return (
     <div className="container mt-5">
-      <h2>{isEdit ? 'Edit Todo' : 'Add New Todo'}</h2>
+      <h2>{isEdit ? "Edit Todo" : "Add New Todo"}</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
           <label htmlFor="title" className="form-label">
@@ -2710,7 +2697,7 @@ const TodoForm = () => {
             className="form-control"
             id="title"
             name="title"
-            defaultValue={todo?.title || ''}
+            defaultValue={todo?.title || ""}
             required
           />
         </div>
@@ -2723,7 +2710,7 @@ const TodoForm = () => {
             id="description"
             name="description"
             rows="3"
-            defaultValue={todo?.description || ''}
+            defaultValue={todo?.description || ""}
           />
         </div>
         <div className="mb-3 form-check">
@@ -2740,7 +2727,13 @@ const TodoForm = () => {
         </div>
         {error && <div className="alert alert-danger">{error}</div>}
         <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? (isEdit ? 'Updating...' : 'Adding...') : (isEdit ? 'Update Todo' : 'Add Todo')}
+          {loading
+            ? isEdit
+              ? "Updating..."
+              : "Adding..."
+            : isEdit
+              ? "Update Todo"
+              : "Add Todo"}
         </button>
       </form>
     </div>
@@ -2750,15 +2743,15 @@ const TodoForm = () => {
 export default TodoForm;
 ```
 
-Let me explain what's happening here: 
+Let me explain what's happening here:
 
 1. We're using the `useLocation` hook to get the location of the current page.
 
-3. Inside the location object we will get the state object which should have the todo object.
+2. Inside the location object we will get the state object which should have the todo object.
 
-4. If it is an edit request, it'll certainly contain the `todo` state object.
+3. If it is an edit request, it'll certainly contain the `todo` state object.
 
-5. If it is an add request, it won't contain the `todo` state object.
+4. If it is an add request, it won't contain the `todo` state object.
 
 Now, we just have to check in all the places where the data can be prefilled and render the default value of the input field if there is a todo object.
 
@@ -2774,15 +2767,14 @@ import axios from "axios";
 
 const API = axios.create({
   baseURL: "http://localhost:8000/api/",
-})
+});
 
 export default api;
- 
 ```
 
 Now, we can use this `API` object to make the requests. instead of `axios` object and writting `http://localhost:8000/api` every time.
 
-Before going into the next part there's one thing I want show you. 
+Before going into the next part there's one thing I want show you.
 
 We are passing the state using the `Link` component and getting the state using the `useLocation` hook in the page. But this is not a good practice. We should fetch the todo from the backend and also we should just render the `title` of the todo in the home page. We don't have to fetch the whole todo list this can be very heavy on the server. So, why don't we fix these issues first.
 
@@ -2839,18 +2831,13 @@ Before we manage that there should a page to see the todos.
 
 ```jsx {.line-numbers}
 //frontend/src/pages/TodoDetails.jsx
-import React from 'react'
+import React from "react";
 
 const TodoDetails = () => {
-  return (
-    <div>
-      todo details
-    </div>
-  )
-}
+  return <div>todo details</div>;
+};
 
-export default TodoDetails
-
+export default TodoDetails;
 ```
 
 This is a new component to see the todo details.
@@ -2868,13 +2855,12 @@ function App() {
   return (
     <Routes>
       ...
-      <Route path="/todo/:id" element={<TodoDetails/>} />
+      <Route path="/todo/:id" element={<TodoDetails />} />
     </Routes>
   );
 }
 
 export default App;
-
 ```
 
 Now, we can see the todo details page in the `todo/:id` route.
@@ -2957,7 +2943,6 @@ Let's set it up.
 pnpm add @tanstack/react-query
 ```
 
-
 Now, wrap the `App` make a query client and wrap the `App` in the `QueryClientProvider` component.
 
 ```jsx {.line-numbers}
@@ -2979,28 +2964,25 @@ createRoot(document.getElementById("root")).render(
     </Router>
   </StrictMode>,
 );
-
 ```
 
 Now, we can use the `tanstack query` to fetch the todo details in the todo details page.
 
-
-
 ```jsx {.line-numbers}
 //frontend/src/pages/TodoDetails.jsx
-import React, { useEffect } from 'react'
-import {useParams} from 'react-router'
-import {API} from '../api/api'
+import React, { useEffect } from "react";
+import { useParams } from "react-router";
+import { API } from "../api/api";
 import { useState } from "react";
 const TodoDetails = () => {
-  const {id} = useParams();
+  const { id } = useParams();
   console.log(id);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [todo, setTodo] = useState(null);
 
-  const fetchTodo = async()=>{
+  const fetchTodo = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -3015,9 +2997,8 @@ const TodoDetails = () => {
       console.log("done");
       setLoading(false);
       console.log(todo);
-      
     }
-  }
+  };
 
   useEffect(() => {
     fetchTodo();
@@ -3027,22 +3008,20 @@ const TodoDetails = () => {
   if (error) return <div>Error: {error.message}</div>;
 
   if (!todo) return <div>Todo not found</div>;
-  
+
   return (
     <div>
       <h1>{todo.title}</h1>
       <p>{todo.description}</p>
       <p>{todo.completed ? "Completed" : "Not Completed"}</p>
     </div>
-  )
-}
+  );
+};
 
-export default TodoDetails
-
+export default TodoDetails;
 ```
 
 Okay now that the todo details page is set up, the todo form should also be updated to the best practice, instead of getting the data from the `todo list` now there is no todo list sent from the backend, so we have to get the data from the `todo details` page. But that will be hastle so best would be to fetch it from the backend using the `single` todo endpoint.
-
 
 ```jsx {.line-numbers}
 //frontend/src/components/TodoForm.jsx
@@ -3134,10 +3113,7 @@ const TodoForm = () => {
 
         <div>
           <label>Description</label>
-          <textarea
-            name="description"
-            defaultValue={todo?.description || ""}
-          />
+          <textarea name="description" defaultValue={todo?.description || ""} />
         </div>
 
         <div>
@@ -3159,8 +3135,8 @@ const TodoForm = () => {
               ? "Updating..."
               : "Adding..."
             : isEdit
-            ? "Update Todo"
-            : "Add Todo"}
+              ? "Update Todo"
+              : "Add Todo"}
         </button>
       </form>
     </div>
@@ -3168,7 +3144,6 @@ const TodoForm = () => {
 };
 
 export default TodoForm;
-
 ```
 
 Now, let's add the deleting a todo feature.
@@ -3250,21 +3225,20 @@ I'm going to do some bootstrap styling to the app and make it look better.
 
 ```jsx {.line-numbers}
 //frontend/src/main.jsx
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
-import { BrowserRouter as Router } from 'react-router'
-import "bootswatch/dist/brite/bootstrap.min.css"
-import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.jsx";
+import { BrowserRouter as Router } from "react-router";
+import "bootswatch/dist/brite/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Router>
       <App />
     </Router>
   </StrictMode>,
-)
-
+);
 ```
 
 With that out of the let's make a authentication system.
@@ -3331,6 +3305,7 @@ async def root():
 
 Base.metadata.create_all(bind=engine)
 ```
+
 > This will automatically now create the table in the database.
 
 and we can now make a new user.
@@ -3443,7 +3418,7 @@ For this make a new file named `oauth.py` in the `auth` folder and add the follo
 #backend/auth/oauth.py
 from fastapi.security import OAuth2PasswordBearer
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_schema = OAuth2PasswordBearer(tokenUrl="token")
 ```
 
 `OAuth2PasswordBearer` is a class that is used to authenticate users using the `Bearer` token and it provides a schema for the token.
@@ -3460,9 +3435,9 @@ So, let's go to the `todo` folder and secute the get_todo endpoint.
     summary="Get todo by id",
 )
 async def get_todo(
-    id: int, 
-    db: Session = Depends(get_db), 
-    token: str = Depends(oauth2_scheme)
+    id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_schema)
 ):
     """
     - **This endpoint will return a todo by id.**
@@ -3478,7 +3453,7 @@ And in your secured endpoint there should be a lock icon.
 
 ![alt text](image-9.png)
 
-> **Note:** The `token` is a string that is returned by the `oauth2_scheme` and it is used to authenticate the user.
+> **Note:** The `token` is a string that is returned by the `oauth2_schema` and it is used to authenticate the user.
 
 click on the authorize button.
 
@@ -3490,9 +3465,9 @@ We have to fill these field to authorize themselves.
 
 Remember,
 
-`oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")`
+`oauth2_schema = OAuth2PasswordBearer(tokenUrl="token")`
 
-This line? 
+This line?
 
 Here, we are specifying the token url. This is the url that will be used to get the token and access the authorization feilds we see in the docs.
 
@@ -3501,7 +3476,7 @@ So, in the `oauth` file we have to write some boiler plate and we need another l
 > This is called an access token. this will have authorization information encoded in it.
 
 ```bash
-pip install jose
+pip install python-jose
 ```
 
 This library will generate JWT tokens for us.
@@ -3515,7 +3490,7 @@ from datetime import timedelta, timezone, datetime
 from typing import Optional
 from jose import JWTError, jwt
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token")
+oauth2_schema = OAuth2PasswordBearer(tokenUrl="api/token")
 
 SECRET_KEY = "ffe9fdf49426ec409ef59500975cb8b718164a9d2b55e90c078b46279ee3d3ca"
 ALGORITHM = "HS256"
@@ -3537,7 +3512,7 @@ def create_access_token(
 
 ```
 
-I know I know a lot of things going on here... 
+I know I know a lot of things going on here...
 
 Nice — you're basically building **JWT authentication manually**, which is great for teaching. I'll explain it in the **teaching narration style** you want:
 "now we do this → code → why we do it" 🔐
@@ -3554,24 +3529,24 @@ from fastapi.security import OAuth2PasswordBearer
 
 This import gives us a **dependency** that automatically:
 
-* reads `Authorization: Bearer <token>`
-* extracts the token
-* passes it to our protected routes
+- reads `Authorization: Bearer <token>`
+- extracts the token
+- passes it to our protected routes
 
 So we don't manually parse headers.
 
 ---
 
-Now we create the scheme:
+Now we create the schema:
 
 ```python
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token")
+oauth2_schema = OAuth2PasswordBearer(tokenUrl="api/token")
 ```
 
 What this does:
 
-* tells FastAPI **where users get tokens from**
-* `tokenUrl="api/token"` means:
+- tells FastAPI **where users get tokens from**
+- `tokenUrl="api/token"` means:
   → frontend sends username/password to `/api/token`
   → backend returns JWT
 
@@ -3591,9 +3566,9 @@ This is the **secret used to sign the token**.
 
 Why?
 
-* JWT is just encoded text
-* Anyone can decode it
-* But only backend can **verify** signature using this key
+- JWT is just encoded text
+- Anyone can decode it
+- But only backend can **verify** signature using this key
 
 So this must stay secret.
 
@@ -3609,9 +3584,9 @@ This defines **which hashing algorithm** we use to sign the token.
 
 `HS256` means:
 
-* HMAC
-* SHA256
-* symmetric secret key
+- HMAC
+- SHA256
+- symmetric secret key
 
 This is the most common JWT algorithm.
 
@@ -3627,9 +3602,9 @@ This is how long the token should stay valid.
 
 Why?
 
-* tokens should not live forever
-* improves security
-* forces user to re-authenticate
+- tokens should not live forever
+- improves security
+- forces user to re-authenticate
 
 ---
 
@@ -3646,8 +3621,8 @@ def create_access_token(
 
 This function takes:
 
-* `data` → payload (like user id, email)
-* `expires_delta` → optional custom expiration time
+- `data` → payload (like user id, email)
+- `expires_delta` → optional custom expiration time
 
 ---
 
@@ -3661,8 +3636,8 @@ to_encode = data.copy()
 
 Why?
 
-* we don't want to modify original dictionary
-* we will add expiration to this copy
+- we don't want to modify original dictionary
+- we will add expiration to this copy
 
 ---
 
@@ -3677,9 +3652,9 @@ if expires_delta:
 
 If expiry provided:
 
-* current time
-* * custom time
-* store in `expire`
+- current time
+- - custom time
+- store in `expire`
 
 ---
 
@@ -3692,8 +3667,8 @@ else:
 
 If no expiry given:
 
-* default to 15 minutes
-* prevents infinite tokens
+- default to 15 minutes
+- prevents infinite tokens
 
 ---
 
@@ -3728,9 +3703,9 @@ encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 This:
 
-* signs payload
-* encrypts signature
-* creates JWT string
+- signs payload
+- encrypts signature
+- creates JWT string
 
 Example result:
 
@@ -3775,6 +3750,7 @@ access_token = create_access_token(
     expires_delta=timedelta(minutes=30)
 )
 ```
+
 ---
 
 > What "sub" means (important for viewers)
@@ -3788,7 +3764,6 @@ data={"sub": user.email}
 `sub` = subject (who owns token)
 
 Later you decode token and get user.
-
 
 Now, make a router for the `/api/token` endpoint in the `auth` folder.
 
@@ -3819,7 +3794,7 @@ def get_token(
 
     if not password_hash.verify(request.password, user.password):
         raise HTTPException(status_code=401, detail="Incorrect password")
-    
+
     access_token = create_access_token(data={"sub": user.username})
 
     return {
@@ -3847,9 +3822,9 @@ from fastapi import APIRouter, Depends, HTTPException
 
 We import:
 
-* `APIRouter` → to create auth routes
-* `Depends` → for dependency injection
-* `HTTPException` → to return proper error responses
+- `APIRouter` → to create auth routes
+- `Depends` → for dependency injection
+- `HTTPException` → to return proper error responses
 
 ---
 
@@ -3861,9 +3836,9 @@ from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 
 This class:
 
-* reads form data
-* expects `username` and `password`
-* automatically parses request body
+- reads form data
+- expects `username` and `password`
+- automatically parses request body
 
 This is the **standard OAuth2 login format**.
 
@@ -3887,9 +3862,9 @@ from database import get_db
 
 This function:
 
-* creates DB session
-* yields it
-* closes it after request
+- creates DB session
+- yields it
+- closes it after request
 
 ---
 
@@ -3933,8 +3908,8 @@ password_hash = PasswordHash.recommended()
 
 This:
 
-* selects best hashing algorithm (argon2)
-* prepares hashing + verification methods
+- selects best hashing algorithm (argon2)
+- prepares hashing + verification methods
 
 We will use this to compare passwords.
 
@@ -3964,9 +3939,9 @@ Now we define login route.
 
 This means:
 
-* POST request
-* endpoint: `/token`
-* user sends credentials here
+- POST request
+- endpoint: `/token`
+- user sends credentials here
 
 This is the **OAuth2 standard token endpoint**.
 
@@ -3980,9 +3955,9 @@ def get_token(
 
 This function will:
 
-* authenticate user
-* generate token
-* return token
+- authenticate user
+- generate token
+- return token
 
 ---
 
@@ -3998,16 +3973,16 @@ Now we inject form data.
 
 Because:
 
-* `OAuth2PasswordRequestForm` **already knows how to read request**
-* FastAPI automatically creates it
-* no extra config needed
+- `OAuth2PasswordRequestForm` **already knows how to read request**
+- FastAPI automatically creates it
+- no extra config needed
 
 So:
 
-* FastAPI reads form body
-* extracts `username`
-* extracts `password`
-* gives it to `request`
+- FastAPI reads form body
+- extracts `username`
+- extracts `password`
+- gives it to `request`
 
 So we can do:
 
@@ -4030,10 +4005,10 @@ Now we inject database session.
 
 This:
 
-* calls `get_db()`
-* creates session
-* passes it to function
-* closes session after request
+- calls `get_db()`
+- creates session
+- passes it to function
+- closes session after request
 
 ---
 
@@ -4047,9 +4022,9 @@ user = db.query(UserModel).filter(UserModel.username == request.username).first(
 
 This:
 
-* queries User table
-* filters by username
-* returns first match
+- queries User table
+- filters by username
+- returns first match
 
 So we find the user trying to login.
 
@@ -4064,8 +4039,8 @@ if not user:
 
 If no user found:
 
-* raise error
-* return response
+- raise error
+- return response
 
 User gets:
 
@@ -4085,9 +4060,9 @@ if not password_hash.verify(request.password, user.password):
 
 This:
 
-* compares plain password
-* with hashed password
-* returns True if match
+- compares plain password
+- with hashed password
+- returns True if match
 
 This is secure comparison.
 
@@ -4113,8 +4088,8 @@ access_token = create_access_token(data={"sub": user.username})
 
 We store:
 
-* `sub` → username
-* inside JWT payload
+- `sub` → username
+- inside JWT payload
 
 Later we decode token and identify user.
 
@@ -4135,10 +4110,10 @@ return {
 
 This sends:
 
-* `access_token` → JWT
-* `token_type` → always "bearer"
-* `user_id` → optional frontend usage
-* `username` → optional frontend usage
+- `access_token` → JWT
+- `token_type` → always "bearer"
+- `user_id` → optional frontend usage
+- `username` → optional frontend usage
 
 ---
 
@@ -4173,3 +4148,244 @@ from auth.router import router as auth_router
 
 app.include_router(auth_router)
 ```
+
+So, now let's set up the frontend.
+
+One last thing is the a `/me` endpoint for the user to get some user info from the token. In the user router we are going to add another route that will decrypt and return the user info.
+
+```python {.line-numbers}
+#backend/user/router.py
+
+...
+from fastapi import APIRouter, Depends, status, HTTPException
+from auth.oauth import oauth2_schema, SECRET_KEY, ALGORITHM
+from jose import JWTError, jwt
+
+...
+
+def get_current_user(
+    token: str = Depends(oauth2_schema),
+    db: Session = Depends(get_db),
+):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+    
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        )
+    
+    user = db.query(UserModel).filter(UserModel.username == username).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not find user",
+        )
+    return user
+
+@router.get("/me", response_model=User)
+async def read_users_me(current_user: UserModel = Depends(get_current_user)):
+    return current_user
+
+...
+```
+
+Again a lot of things going on... Let me explain.
+
+We have a function to get the current user. I did it because there will be other endpoints where we might need to get the user later. So instead of rewriting the same logic again and again, we create a reusable dependency.
+
+Now let's look at the function.
+
+```python
+def get_current_user(
+    token: str = Depends(oauth2_schema),
+    db: Session = Depends(get_db),
+):
+```
+
+Here we are using dependency injection again.
+
+First we inject the token:
+
+```python
+token: str = Depends(oauth2_schema)
+```
+
+This tells FastAPI:
+
+* read the `Authorization` header
+* extract the `Bearer` token
+* pass it as `token` variable
+
+So we don't manually read headers.
+
+Then we inject database session:
+
+```python
+db: Session = Depends(get_db)
+```
+
+So now inside this function we have:
+
+* the JWT token
+* database access
+
+Now that we have the token, we need to decode it.
+
+```python
+try:
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    username = payload.get("sub")
+```
+
+Here we decode the JWT using:
+
+* `SECRET_KEY` to verify signature
+* `ALGORITHM` to verify hashing method
+
+If the token is valid, we get the payload.
+
+From the payload we extract:
+
+```python
+username = payload.get("sub")
+```
+
+Earlier when we created the token, we stored:
+
+```python
+data={"sub": user.username}
+```
+
+So now we are retrieving that same value.
+
+Now, if decoding fails, we handle the error.
+
+```python
+except JWTError:
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+    )
+```
+
+This happens when:
+
+* token is expired
+* token is invalid
+* signature mismatch
+* token tampered
+
+So we return `401 Unauthorized`.
+
+Now we have the username, but we still need the user object from database.
+
+```python
+user = db.query(UserModel).filter(UserModel.username == username).first()
+```
+
+This finds the user whose username matches the token.
+
+Now we check if user exists.
+
+```python
+if not user:
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not find user",
+    )
+```
+
+This handles edge cases:
+
+* user deleted
+* token still valid but user removed
+* database inconsistency
+
+Finally we return the user.
+
+```python
+return user
+```
+
+So this function:
+
+* reads token
+* decodes token
+* finds user
+* returns user
+
+Now we create the `/me` endpoint.
+
+```python
+@router.get("/me", response_model=User)
+```
+
+This creates a GET endpoint at `/me`.
+
+Also:
+
+```python
+response_model=User
+```
+
+This means:
+
+* response will be serialized using `User` schema
+* sensitive fields like password won't be returned
+* FastAPI auto validates response
+
+Now the route function:
+
+```python
+async def read_users_me(current_user: UserModel = Depends(get_current_user)):
+```
+
+Here we inject `get_current_user` dependency.
+
+So FastAPI will:
+
+1. call `get_current_user`
+2. get the user
+3. pass it to `current_user`
+
+So we don't manually call it.
+
+Now we return the user.
+
+```python
+return current_user
+```
+
+FastAPI automatically converts SQLAlchemy model into response schema.
+
+---
+
+So the full flow is:
+
+1. Frontend sends request to `/me`
+2. Includes `Authorization: Bearer <token>`
+3. FastAPI extracts token
+4. `get_current_user` decodes token
+5. Database fetches user
+6. `/me` returns user info
+
+This endpoint is useful because:
+
+* frontend can get logged in user
+* no need to store user info locally
+* always stays in sync
+* secure and standard
+
+Also since `get_current_user` is reusable, we can protect other routes like:
+
+```python
+@router.get("/protected")
+def protected_route(current_user = Depends(get_current_user)):
+```
+
+Now only logged in users can access it.
+
+So `/me` is just the first use case — but the dependency is reusable across the whole application.

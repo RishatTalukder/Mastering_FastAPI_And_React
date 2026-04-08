@@ -3,7 +3,7 @@ from datetime import timedelta, timezone, datetime
 from typing import Optional
 from jose import JWTError, jwt
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token")
+oauth2_schema = OAuth2PasswordBearer(tokenUrl="api/token")
 
 SECRET_KEY = "ffe9fdf49426ec409ef59500975cb8b718164a9d2b55e90c078b46279ee3d3ca"
 ALGORITHM = "HS256"

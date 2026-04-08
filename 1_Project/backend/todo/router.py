@@ -5,7 +5,7 @@ from todo.schemas import Todo, Todo_Request, Todo_Title
 from database import get_db
 from sqlalchemy.orm import Session, load_only
 from todo.models import Todo as TodoModel
-from auth.oauth import oauth2_scheme
+from auth.oauth import oauth2_schema
 
 router = APIRouter(
     prefix="/todo",
@@ -81,7 +81,7 @@ async def update_todo(
     summary="Get todo by id",
 )
 async def get_todo(
-    id: int, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
+    id: int, db: Session = Depends(get_db), token: str = Depends(oauth2_schema)
 ):
     """
     - **This endpoint will return a todo by id.**
