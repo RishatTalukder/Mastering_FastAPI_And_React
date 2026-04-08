@@ -3394,10 +3394,10 @@ So, to do stop this we can use the `exclude` attribute. The problem is that we h
 ```python {.line-numbers}
 #backend/user/schemas.py
 from pydantic import BaseModel, ConfigDict, Field
-
+from typing import Optional
 class User(BaseModel):
     username: str
-    email: str
+    email: Optional[str] = None
     password: str = Field(exclude=True)
 
     model_config = ConfigDict(from_attributes=True)
@@ -4389,3 +4389,612 @@ def protected_route(current_user = Depends(get_current_user)):
 Now only logged in users can access it.
 
 So `/me` is just the first use case — but the dependency is reusable across the whole application.
+
+
+Okay now let's so the frontend side.
+
+First we need a signup page and a login page.
+
+Make 2 new files in the `frontend/src/pages` folder:
+
+```jsx {.line-numbers}
+//frontend/src/pages/Signup.jsx
+import React, { useState } from "react";
+
+const Signup = () => {
+
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log(form);
+  };
+  return (
+    <form action="" onSubmit={handleSubmit}>
+      <input
+        type="text"
+        placeholder="username"
+        onChange={(e) => setForm({ ...form, username: e.target.value })}
+      />
+      <input
+        type="password"
+        placeholder="password"
+        onChange={(e) => setForm({ ...form, password: e.target.value })}
+      />
+      <button type="submit">Signup</button>
+    </form>
+  );
+};
+
+export default Signup;
+```
+
+```jsx {.line-numbers}
+//frontend/src/pages/Login.jsx
+import React from "react";
+import { useState } from "react";
+
+const Login = () => {
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log(form);
+  };
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="username"
+          onChange={(e) => setForm({ ...form, username: e.target.value })}
+        />
+        <input
+          type="password"
+          placeholder="password"
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+        />
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  );
+};
+
+export default Login;
+```
+
+These are just sample pages. In the login page we need to make a request to `/token` endpoint and for registration we need to make a request to `/users/new_user` endpoint.
+
+Let's add them to the router.
+
+```jsx {.line-numbers}
+//frontend/src/app.jsx
+...
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+
+function App() {
+  return (
+    <Routes>
+      ...
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+    </Routes>
+  );
+}
+
+export default App;
+```
+
+There's a lot of things happening right? We have to right same code again and again and again.
+
+Best would be configure the frontend to make requests to the backend.
+
+It would be better to make a contex provider for authentication.
+
+Make a new folder named context and inside that make a new file called `AuthProvider.jsx` and write the following code,
+
+```jsx {.line-numbers}
+//frontend/src/context/AuthProvider.jsx
+import React from "react";
+import { createContext, useState, useEffect } from "react";
+import { API } from "../api/api";
+
+export const AuthContext = createContext();
+
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const login = async (credentials) => {
+    const response = await API.post("/token/", credentials);
+    const { access_token } = response.data;
+    localStorage.setItem("token", access_token);
+
+    await getUser();
+  };
+
+  const register = async (credentials) => {
+    await API.post("/user/new_user/", credentials);
+  };
+
+  const getUser = async () => {
+    try {
+      const response = await API.get("/user/me/");
+      setUser(response.data);
+    } catch (error) {
+      console.log(error);
+      setUser(null);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
+  };
+
+  useEffect(() => {
+    getUser();
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export default AuthProvider;
+```
+
+- Step 1 — We import required hooks
+
+Now we import React and hooks we need.
+
+```javascript
+import React from "react";
+import { createContext, useState, useEffect } from "react";
+```
+
+We use:
+
+* `createContext` → to create global auth state
+* `useState` → to store user
+* `useEffect` → to check login on app load
+
+---
+
+Now we import API helper.
+
+```javascript
+import { API } from "../api/api";
+```
+
+This is your Axios instance (with base URL + token interceptor).
+
+---
+
+- Step 2 — Create context
+
+Now we create the context.
+
+```javascript
+export const AuthContext = createContext();
+```
+
+This creates a **global container** where auth data will live.
+
+Later components can access it using:
+
+```javascript
+useContext(AuthContext)
+```
+
+---
+
+- Step 3 — Create provider component
+
+Now we create provider.
+
+```javascript
+const AuthProvider = ({ children }) => {
+```
+
+This component will:
+
+* hold auth state
+* provide auth functions
+* wrap the entire app
+
+`children` = everything inside `<AuthProvider>`.
+
+---
+
+- Step 4 — Create user state
+
+Now we store the logged-in user.
+
+```javascript
+const [user, setUser] = useState(null);
+```
+
+Initially:
+
+* `null` → user not logged in
+* later → user object from `/me`
+
+---
+
+- Step 5 — login function
+
+Now we define login function.
+
+```javascript
+const login = async (credentials) => {
+```
+
+`credentials` contains:
+
+```json
+{
+  "username": "...",
+  "password": "..."
+}
+```
+
+---
+
+Now we send login request.
+
+```javascript
+const response = await API.post("/token/", credentials);
+```
+
+This calls backend `/token` endpoint.
+
+Backend returns:
+
+```json
+{
+  "access_token": "...",
+  "token_type": "bearer"
+}
+```
+
+---
+
+Now we extract token.
+
+```javascript
+const { access_token } = response.data;
+```
+
+---
+
+Now we store token.
+
+```javascript
+localStorage.setItem("token", access_token);
+```
+
+We store in localStorage so:
+
+* persists after refresh
+* used by Axios interceptor
+* sent in Authorization header
+
+---
+
+Now we fetch user info.
+
+```javascript
+await getUser();
+```
+
+This calls `/me` endpoint and sets user state.
+
+So login flow:
+
+1. get token
+2. store token
+3. fetch user
+
+---
+
+- Step 6 — register function
+
+Now we create register.
+
+```javascript
+const register = async (credentials) => {
+  await API.post("/user/new_user/", credentials);
+};
+```
+
+This:
+
+* creates new user
+* does NOT log them in automatically
+* user must login after register
+
+---
+
+- Step 7 — getUser function
+
+Now we create function to fetch logged-in user.
+
+```javascript
+const getUser = async () => {
+```
+
+We call `/me` endpoint.
+
+```javascript
+const response = await API.get("/user/me/");
+```
+
+If token is valid:
+
+* backend returns user
+* we store it
+
+```javascript
+setUser(response.data);
+```
+
+---
+
+If request fails:
+
+```javascript
+catch (error) {
+  console.log(error);
+  setUser(null);
+}
+```
+
+This happens when:
+
+* no token
+* token expired
+* invalid token
+
+So we reset user.
+
+---
+
+- Step 8 — logout function
+
+Now we create logout.
+
+```javascript
+const logout = () => {
+  localStorage.removeItem("token");
+  setUser(null);
+};
+```
+
+This:
+
+* removes token
+* resets user
+* user becomes logged out
+
+---
+
+- Step 9 — check login on app load
+
+Now we run this when app loads.
+
+```javascript
+useEffect(() => {
+  getUser();
+}, []);
+```
+
+This:
+
+* runs once
+* checks if token exists
+* fetches user
+* keeps user logged in after refresh
+
+So page refresh does NOT log user out.
+
+---
+
+- Step 10 — Provide context values
+
+Now we pass everything to context.
+
+```javascript
+<AuthContext.Provider value={{ user, login, register, logout }}>
+```
+
+We expose:
+
+* `user`
+* `login`
+* `register`
+* `logout`
+
+So any component can access them.
+
+---
+
+- Step 11 — Render children
+
+```javascript
+{children}
+```
+
+This renders the rest of the app.
+
+---
+
+- Final Mental Model
+
+AuthProvider does:
+
+* store user globally
+* login user
+* register user
+* logout user
+* auto login on refresh
+
+---
+
+- How components use it
+
+Example:
+
+```javascript
+const { user, logout } = useContext(AuthContext);
+```
+
+Now you can:
+
+* show username
+* logout button
+* protect routes
+
+---
+
+
+now we can simply use these functions to login and signup.
+
+```jsx {.line-numbers}
+//frontend/src/pages/signup.jsx
+import React, { useContext, useState } from "react";
+import { AuthContext } from "../context/AuthProvider";
+
+const Signup = () => {
+  //using the signup function from the context
+  const { signup } = useContext(AuthContext);
+
+  const [form, setForm] = useState({
+    username: "",
+    // email : "",
+    password: "",
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await signup(form); 
+    console.log(form);
+  };
+  return (
+    ....
+  );
+};
+
+export default Signup;
+```
+
+We can just call the signup function inside the handle submit function.
+
+same goes for the login page.
+
+```jsx {.line-numbers}
+//frontend/src/pages/login.jsx
+import React, { useContext } from "react";
+import { useState } from "react";
+import {AuthContext} from '../context/AuthProvider'
+
+const Login = () => {
+  const {login}=useContext(AuthContext)
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await login(form);
+    console.log(form);
+  };
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="username"
+          onChange={(e) => setForm({ ...form, username: e.target.value })}
+        />
+        <input
+          type="password"
+          placeholder="password"
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+        />
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  );
+};
+
+export default Login;
+```
+
+This SHOULD NOT WORK AT ALL... What can be the cause?
+
+This wont work because the backend `Oauth2passwordRequestForm` expects a `application/x-www-form-urlencoded` body but we are sending a `json` body.
+
+So, we have fix the login function to send a `x-www-form-urlencoded` body.
+
+```jsx {.line-numbers}
+//frontend/src/context/AuthProvider.jsx
+const login = async (credentials) => {
+    const response = await API.post(
+      "/token/",
+      new URLSearchParams(credentials),
+    );
+    const { access_token } = response.data;
+    localStorage.setItem("token", access_token);
+
+    await getUser();
+  };
+```
+
+> URLsearchParams class will transform an object into a query string.
+
+and now the login functionality should work properly.
+
+And if you go the inspect tool and open the application tab and go to the local storage you can see the token.
+
+Now, it is usable for 30minutes and we can just send it as a default header with every request. so, that we don't have to write it again and again. so, now let's add default headers.
+
+```jsx {.line-numbers}
+//frontend/src/api/api.js
+import axios from "axios";
+
+export const API = axios.create({
+    baseURL: "http://localhost:8000/api/",
+});
+
+API.interceptors.request.use((req)=>{
+    const token = localStorage.getItem('token')
+    if(token){
+        req.headers.Authorization = `Bearer ${token}`
+    }
+    return req
+})
+
+export default API;
+``` 
+
+Here interceptors are used to add default headers to the request.
+
+Inside the interceptor, we are getting the token from the local storage and adding it to the request headers as authorization bearer token.
+
+And now let's see if this works.
+
+We actually make a get user function that will activate when the user is logged in and when the component mounts and a user state to store the user info after token varification in the `/me` endpoint.
+
+if you take a look in the react dev tools you should see the user state success fully updating. Adn now we can send a authorized request to every endpoint that needs authorization.
+
+So, now we can finish the project by adding user todo fetching in every single endpoint and then we can update the frontend. 
