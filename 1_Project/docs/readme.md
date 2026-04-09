@@ -4871,10 +4871,11 @@ now we can simply use these functions to login and signup.
 //frontend/src/pages/signup.jsx
 import React, { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthProvider";
+import { useNavigate } from "react-router";
 
 const Signup = () => {
-  //using the signup function from the context
   const { signup } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     username: "",
@@ -4884,15 +4885,29 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await signup(form);
+    await signup(form); 
     console.log(form);
+    navigate("/");
   };
   return (
-    ....
+    <form action="" onSubmit={handleSubmit}>
+      <input
+        type="text"
+        placeholder="username"
+        onChange={(e) => setForm({ ...form, username: e.target.value })}
+      />
+      <input
+        type="password"
+        placeholder="password"
+        onChange={(e) => setForm({ ...form, password: e.target.value })}
+      />
+      <button type="submit">Signup</button>
+    </form>
   );
 };
 
 export default Signup;
+
 ```
 
 We can just call the signup function inside the handle submit function.
@@ -4903,10 +4918,12 @@ same goes for the login page.
 //frontend/src/pages/login.jsx
 import React, { useContext } from "react";
 import { useState } from "react";
-import { AuthContext } from "../context/AuthProvider";
+import {AuthContext} from '../context/AuthProvider'
+import { useNavigate } from "react-router";
 
 const Login = () => {
-  const { login } = useContext(AuthContext);
+  const {login}=useContext(AuthContext)
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     username: "",
     password: "",
@@ -4915,7 +4932,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     await login(form);
-    console.log(form);
+    navigate("/login");
   };
   return (
     <div>
@@ -4937,6 +4954,7 @@ const Login = () => {
 };
 
 export default Login;
+
 ```
 
 This SHOULD NOT WORK AT ALL... What can be the cause?
@@ -5210,3 +5228,278 @@ async def delete_todo(
 
 > same logic as above.
 > The delete method returns the number of rows deleted. im using that to check if the todo is deleted or not. If it's not deleted, we raise a `HTTPException` with status code `404` and detail `Todo not found`.
+
+Okay, now that we have all the endpoints we can make the frontend.
+
+So, let's sart with a navbar and show the username after login in. The user can only make a todo if he is logged in. So, we need to do some fare share of work in the frontend.
+
+```jsx {.line-numbers}
+//frontend/src/components/Navbar.jsx
+import React, { useContext } from "react";
+import { AuthContext } from "../context/AuthProvider";
+import { Link } from "react-router";
+
+const Navbar = () => {
+  const { user, logout } = useContext(AuthContext);
+
+  return (
+    <nav className="navbar navbar-expand-lg navbar-light bg-light border-bottom px-3">
+      <Link className="navbar-brand fw-bold" to="/">
+        TaskForge
+      </Link>
+
+      <div className="ms-auto d-flex align-items-center gap-2">
+        {!user ? (
+          <>
+            <Link to="/login" className="btn btn-outline-primary">
+              Login
+            </Link>
+            <Link to="/signup" className="btn btn-primary">
+              Sign Up
+            </Link>
+          </>
+        ) : (
+          <>
+            <span className="me-2 fw-semibold">
+              👋 {user.username}
+            </span>
+            <button className="btn btn-danger" onClick={logout}>
+              Logout
+            </button>
+          </>
+        )}
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
+```
+
+> We are using the `useContext` hook to get the `user` and `logout` function from the `AuthContext`. The `user` is the current user and the `logout` function logs the user out.
+
+> If the user is not logged in, we show the login and signup buttons. If the user is logged in, we show the username and a logout button.
+
+But this navbar should be shared thoughout the app right?
+
+So, we need to setup shared layout for the app routing.
+
+Make a new folder named `shareLayouts` inside the `frontend` folder and inside that make a new file called `MainLayout.jsx` and write the following code,
+
+```jsx {.line-numbers}
+import React, { useContext } from 'react'
+import { AuthContext } from '../context/AuthProvider'
+import Navbar from '../components/Navbar'
+import { Outlet } from 'react-router'
+
+const MainLayout = () => {
+  return (
+    <div>
+      <Navbar/>
+      <main>
+        <Outlet/>
+      </main>
+    </div>
+  )
+}
+
+export default MainLayout
+```
+
+> outlet is a special component that renders the child routes.
+
+Now, we can use this shared layout in all the routes.
+
+```jsx {.line-numbers}
+//frontend/src/App.jsx
+import Home from "./pages/Home";
+import { Routes, Route, Router } from "react-router";
+import TodoForm from "./pages/TodoForm";
+import TodoDetails from "./pages/TodoDetails";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import MainLayout from "./sharedLayouts/MainLayout";
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<MainLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/new" element={<TodoForm />} />
+        <Route path="/edit/:id" element={<TodoForm />} />
+        <Route path="/todo/:id" element={<TodoDetails />} />
+      </Route>
+
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+    </Routes>
+  );
+}
+
+export default App;
+```
+
+We can pass the home, todo form, todo details, login and signup pages as children to the `MainLayout` component route and we can use the `Outlet` component to render the child routes.Amazing right?
+
+One last thing is I want to make all the routes protected. 
+
+```jsx {.line-numbers}
+//frontend/src/App.jsx
+import Home from "./pages/Home";
+import { Routes, Route, Router } from "react-router";
+import TodoForm from "./pages/TodoForm";
+import TodoDetails from "./pages/TodoDetails";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import MainLayout from "./sharedLayouts/MainLayout";
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<MainLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/new" element={<TodoForm />} />
+        <Route path="/edit/:id" element={<TodoForm />} />
+        <Route path="/todo/:id" element={<TodoDetails />} />
+      </Route>
+
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+    </Routes>
+  );
+}
+
+export default App;
+```
+
+Last thing is protecting the route. I want to protect all the routes except the login and signup routes.
+
+If the user is not logged in then we want to redirect them to the login page. after log in the user should be redirected to the home page.
+
+Make a new folder named `protectedRoutes` inside the `frontend` folder and inside that make a new file called `ProtectedRoute.jsx` and write the following code,
+
+```jsx {.line-numbers}
+import React, { useContext } from 'react'
+import { AuthContext } from '../context/AuthProvider'
+import { Navigate } from 'react-router'
+
+const ProtectedRoute = ({children}) => {
+  const {user} = useContext(AuthContext)
+  if(!user){
+    return <Navigate to='/login'/>
+  }
+  return children
+}
+
+export default ProtectedRoute
+```
+
+> We are using the `useContext` hook to get the `user` from the `AuthContext`. If the user is not logged in, we redirect the user to the login page.
+
+Now, we can protect all the routes except the login and signup routes.
+
+```jsx {.line-numbers}
+//frontend/src/App.jsx
+import Home from "./pages/Home";
+import { Routes, Route, Router } from "react-router";
+import TodoForm from "./pages/TodoForm";
+import TodoDetails from "./pages/TodoDetails";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import MainLayout from "./sharedLayouts/MainLayout";
+import ProtectedRoute from "./protectedRoutes/ProtectedRoute";
+
+function App() {
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/" element={<Home />} />
+        <Route path="/new" element={<TodoForm />} />
+        <Route path="/edit/:id" element={<TodoForm />} />
+        <Route path="/todo/:id" element={<TodoDetails />} />
+      </Route>
+
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+    </Routes>
+  );
+}
+
+export default App;
+```
+
+Everything now works properly but there one thing I was expecting that might happen is you get a redirection flicker. and if you look the carefully at the login system everytime you reload the page even though you are logged in you will be redirected to the login page.
+
+This is because in the auth provider we are using `useEffect` hook to call the `getUser` function to get the user info.
+
+It needs time to fetch but as soon as the page is loaded it will check if there is a user in the user state. It'll see that no it doesn't so automatically redirected to the login page even though the frontend is sending the token to backend. It is a very common issue and can be solved with a loading state.
+
+```jsx {.line-numbers}
+//frontend/src/context/AuthProvider.jsx
+import React from "react";
+import { createContext, useState, useEffect } from "react";
+import { API } from "../api/api";
+
+export const AuthContext = createContext();
+
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getUser().finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, login, signup, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export default AuthProvider;
+```
+
+> We are using the `useEffect` hook to call the `getUser` function to get the user info.
+
+Now we use this loading state in the protected route.
+
+
+```jsx {.line-numbers}
+//frontend/src/protectedRoutes/ProtectedRoute.jsx
+import React, { useContext } from 'react'
+import { AuthContext } from '../context/AuthProvider'
+import { Navigate } from 'react-router'
+
+const ProtectedRoute = ({children}) => {
+  const {user, loading} = useContext(AuthContext)
+
+  // we wait until the user is loaded
+  if(loading){
+    return <h1>Loading...</h1>
+  }
+
+  // if there is no user after loading we redirect
+  if(!user){
+    return <Navigate to='/login'/>
+  }
+  return children
+}
+
+export default ProtectedRoute
+```
+
+And should be it.
+
+Final touch would be to style the login and signup pages.
+
+So it on your own i tired of this projetc.
+
+I though I would need to make a lot of project to teach fullstack but guess what? One is enough.

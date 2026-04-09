@@ -6,6 +6,7 @@ export const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const login = async (credentials) => {
     const response = await API.post(
@@ -38,11 +39,11 @@ const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    getUser();
+    getUser().finally(() => setLoading(false));
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
