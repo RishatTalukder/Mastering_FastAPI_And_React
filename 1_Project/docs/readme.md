@@ -3562,6 +3562,12 @@ Now we define some constants used when creating tokens.
 SECRET_KEY = "ffe9fdf49426ec409ef59500975cb8b718164a9d2b55e90c078b46279ee3d3ca"
 ```
 
+You can generate your own secret key using the terminal.
+
+```bash
+python -c "import secrets; print(secrets.token_hex())"
+```
+
 This is the **secret used to sign the token**.
 
 Why?
