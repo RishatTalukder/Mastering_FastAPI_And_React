@@ -4893,7 +4893,7 @@ const Signup = () => {
     e.preventDefault();
     await signup(form); 
     console.log(form);
-    navigate("/");
+    navigate("/login");
   };
   return (
     <form action="" onSubmit={handleSubmit}>
@@ -4938,7 +4938,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     await login(form);
-    navigate("/login");
+    navigate("/");
   };
   return (
     <div>
