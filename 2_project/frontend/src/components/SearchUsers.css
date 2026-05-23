@@ -1,0 +1,75 @@
+.search-users {
+  margin-bottom: 1.5rem;
+}
+
+.search-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.search-loading {
+  position: absolute;
+  right: 10px;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.search-error {
+  color: #dc3545;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.search-result-item {
+  padding: 0.75rem;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.search-result-item:hover {
+  background-color: #f5f5f5;
+}
+
+.result-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.result-username {
+  font-weight: bold;
+  color: #333;
+}
+
+.result-fullname {
+  font-size: 0.9rem;
+  color: #666;
+}
