@@ -33,7 +33,7 @@ async def get_user_from_token(token: str) -> dict:
         user_id = payload.get("sub")
         if user_id is None:
             return None
-        return {"id": user_id, "username": payload.get("username")}
+        return {"id": int(user_id), "username": payload.get("username")}
     except:
         return None
 

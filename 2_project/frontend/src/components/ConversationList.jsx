@@ -43,7 +43,13 @@ const ConversationList = ({ selectedUser, onSelectUser }) => {
               className={`conversation-item ${
                 selectedUser?.id === conv.user_id ? "active" : ""
               }`}
-              onClick={() => onSelectUser(conv)}
+              onClick={() =>
+                onSelectUser({
+                  id: conv.user_id,
+                  username: conv.username,
+                  full_name: conv.full_name,
+                })
+              }
             >
               <div className="conversation-info">
                 <div className="conversation-username">{conv.username}</div>

@@ -42,7 +42,7 @@ async def search_users(
 
 @router.get("/me", response_model=UserProfile)
 async def get_current_user_profile(
-    current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Get current user's profile"""
     user = db.query(User).filter(User.id == current_user["id"]).first()
